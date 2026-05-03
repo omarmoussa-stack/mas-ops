@@ -77,24 +77,25 @@ document.addEventListener('DOMContentLoaded', function () {
     return BASE_URL + '/api/calendar/events?' + params.toString();
   }
 
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
   const calendar = new FullCalendar.Calendar(calEl, {
-    initialView: 'dayGridMonth',
-    headerToolbar: {
-      left:   'prev,next today',
-      center: 'title',
-      right:  'dayGridMonth,timeGridWeek,listWeek',
-    },
+    initialView: isMobile ? 'listMonth' : 'dayGridMonth',
+    headerToolbar: isMobile
+      ? { left: 'prev,next', center: 'title', right: 'today' }
+      : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' },
     height: 'auto',
-    events: buildFeedUrl(),
+    contentHeight: isMobile ? 'auto' : 700,
+    expandRows: true,
+    dayMaxEvents: isMobile ? false : 3,
+    moreLinkClick: 'popover',
     displayEventTime: true,
     displayEventEnd: false,
     eventDisplay: 'block',
-    dayMaxEvents: 4,
-    moreLinkClick: 'popover',
+    events: buildFeedUrl(),
     eventClick(info) {
       const p = info.event.extendedProps;
-      document.getElementById('modalTitle').textContent =
-        info.event.title;
+      document.getElementById('modalTitle').textContent = info.event.title;
       document.getElementById('modalBody').innerHTML = `
         <dl class="row mb-0">
           <dt class="col-4 text-muted fw-normal">Status</dt>
@@ -102,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <dt class="col-4 text-muted fw-normal">Location</dt>
           <dd class="col-8">${p.location}</dd>
           <dt class="col-4 text-muted fw-normal">Phone</dt>
-          <dd class="col-8">${p.phone}</dd>
+          <dd class="col-8"><a href="tel:${p.phone}">${p.phone}</a></dd>
           <dt class="col-4 text-muted fw-normal">Technician</dt>
           <dd class="col-8">${p.technician || '—'}</dd>
           ${p.amount != null ? `<dt class="col-4 text-muted fw-normal">Amount</dt><dd class="col-8">EGP ${Number(p.amount).toLocaleString()}</dd>` : ''}
@@ -119,6 +120,17 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   document.getElementById('statusFilter').addEventListener('change', () => {
     calendar.setOption('events', buildFeedUrl());
+  });
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      const nowMobile = window.matchMedia('(max-width: 768px)').matches;
+      if (nowMobile !== isMobile) {
+        location.reload();
+      }
+    }, 300);
   });
 });
 </script>

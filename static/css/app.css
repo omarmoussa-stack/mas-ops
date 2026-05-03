@@ -363,3 +363,37 @@ h1, h2, h3, h4, h5, h6 { color: var(--text) !important; font-weight: 600; }
 .fc-list-event:hover td { background: var(--surface-2) !important; }
 .fc-list-event-title a { color: var(--text) !important; }
 .fc-list-event-time { color: var(--text-muted) !important; }
+
+/* ========== CALENDAR MOBILE FIXES ========== */
+@media (max-width: 768px) {
+  .fc .fc-toolbar.fc-header-toolbar {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .fc .fc-toolbar-title {
+    font-size: 1rem !important;
+    text-align: center;
+  }
+  .fc .fc-button {
+    font-size: 12px !important;
+    padding: 4px 10px !important;
+  }
+  .fc-list-event-time,
+  .fc-list-event-title {
+    font-size: 13px;
+  }
+  .fc-list-day-cushion {
+    font-size: 12px !important;
+  }
+  .fc-event {
+    font-size: 12px !important;
+    padding: 4px 6px !important;
+  }
+  .fc-list-table td {
+    padding: 8px 6px !important;
+  }
+}
+
+/* List view always — better wrapping for long titles */
+.fc-list-event-title { white-space: normal !important; }
