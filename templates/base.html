@@ -4,6 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}MAS Ops{% endblock %}</title>
+  <meta name="theme-color" content="#0e1014">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MAS Ops">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+  <link rel="apple-touch-icon" sizes="192x192" href="{{ url_for('static', filename='img/icon-192.png') }}">
+  <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='img/icon-192.png') }}">
   <script>(function(){var t=localStorage.getItem('mas-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -209,5 +216,15 @@
   {% endif %}
 
   {% block scripts %}{% endblock %}
+
+  <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register("{{ url_for('service_worker') }}", {
+        scope: "{{ (request.script_root + '/') if request.script_root else '/' }}"
+      }).catch((err) => console.error('SW registration failed:', err));
+    });
+  }
+  </script>
 </body>
 </html>

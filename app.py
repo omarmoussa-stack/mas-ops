@@ -211,6 +211,18 @@ def create_app(config_object=DevelopmentConfig):
             return jsonify(error="not_found"), 404
         return "404 — Not Found", 404
 
+    @app.route("/sw.js")
+    def service_worker():
+        from flask import send_from_directory, current_app
+        response = send_from_directory(
+            current_app.static_folder,
+            "sw.js",
+            mimetype="application/javascript",
+        )
+        response.headers["Service-Worker-Allowed"] = "/"
+        response.headers["Cache-Control"] = "no-cache"
+        return response
+
     return app
 
 
