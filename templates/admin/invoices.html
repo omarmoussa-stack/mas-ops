@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Invoices — MAS Ops{% endblock %}
+
+{% block content %}
+<h4 class="fw-semibold mb-4"><i class="bi bi-receipt me-2"></i>Invoices</h4>
+
+{# Tabs #}
+<ul class="nav nav-tabs mb-4">
+  <li class="nav-item">
+    <a class="nav-link {{ 'active' if tab == 'pending' }}"
+       href="?tab=pending">
+      Pending
+      {% if pending %}
+        <span class="badge bg-danger ms-1">{{ pending|length }}</span>
+      {% endif %}
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {{ 'active' if tab == 'history' }}"
+       href="?tab=history">History</a>
+  </li>
+</ul>
+
+{% if tab == 'pending' %}
+  {% if pending %}
+  <div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 small">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Client</th>
+            <th>Type</th>
+            <th>Completed</th>
+            <th>Amount</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for job in pending %}
+          <tr>
+            <td class="text-muted">{{ job.id }}</td>
+            <td>
+              <span class="fw-medium">{{ job.client_name }}</span>
+              <div class="text-muted" style="font-size:11px">{{ job.location }}</div>
+            </td>
+            <td>{{ job.job_type }}</td>
+            <td class="text-muted">
+              {{ job.completion_date.strftime("%d %b %Y") if job.completion_date else "—" }}
+            </td>
+            <td>
+              {% if job.amount %}
+                <span class="fw-medium">EGP {{ "{:,.0f}".format(job.amount) }}</span>
+              {% else %}
+                <span class="text-muted">Not set</span>
+              {% endif %}
+            </td>
+            <td class="text-nowrap">
+              <a href="{{ url_for('admin.invoice_view', job_id=job.id) }}"
+                 class="btn btn-outline-primary btn-sm me-1" title="View invoice">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{{ url_for('admin.invoice_send_whatsapp', job_id=job.id) }}"
+                 target="_blank"
+                 class="btn btn-outline-success btn-sm me-1" title="Send via WhatsApp">
+                <i class="bi bi-whatsapp"></i>
+              </a>
+              <a href="{{ url_for('admin.invoice_send_email', job_id=job.id) }}"
+                 class="btn btn-outline-secondary btn-sm me-1" title="Send via Email">
+                <i class="bi bi-envelope"></i>
+              </a>
+              <form method="post" action="{{ url_for('admin.invoice_mark', job_id=job.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-success btn-sm" title="Mark as invoiced"
+                        onclick="return confirm('Mark job #{{ job.id }} as invoiced?')">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="text-center text-muted py-5">
+    <i class="bi bi-check-circle display-4 d-block mb-2 opacity-25"></i>
+    No pending invoices — you're all caught up!
+  </div>
+  {% endif %}
+
+{% else %}
+  {# History tab #}
+  <form method="get" class="d-flex gap-2 mb-3">
+    <input type="hidden" name="tab" value="history">
+    <input type="text" name="client" value="{{ client_filter }}"
+           class="form-control form-control-sm w-auto"
+           placeholder="Filter by client name…">
+    <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+    {% if client_filter %}
+      <a href="?tab=history" class="btn btn-outline-secondary btn-sm">Clear</a>
+    {% endif %}
+  </form>
+
+  <div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 small">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Client</th>
+            <th>Type</th>
+            <th>Completed</th>
+            <th>Amount</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for job in history %}
+          <tr>
+            <td class="text-muted">{{ job.id }}</td>
+            <td>
+              <span class="fw-medium">{{ job.client_name }}</span>
+              <div class="text-muted" style="font-size:11px">{{ job.location }}</div>
+            </td>
+            <td>{{ job.job_type }}</td>
+            <td class="text-muted">
+              {{ job.completion_date.strftime("%d %b %Y") if job.completion_date else "—" }}
+            </td>
+            <td>
+              {% if job.amount %}EGP {{ "{:,.0f}".format(job.amount) }}{% else %}—{% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('admin.invoice_view', job_id=job.id) }}"
+                 class="btn btn-outline-secondary btn-sm me-1">
+                <i class="bi bi-eye"></i>
+              </a>
+              <form method="post"
+                    action="{{ url_for('admin.invoice_delete', job_id=job.id) }}"
+                    class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-outline-danger btn-sm"
+                        onclick="return confirm('Delete invoice for job #{{ job.id }}?')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">No invoiced jobs yet.</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

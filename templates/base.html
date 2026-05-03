@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}MAS Ops{% endblock %}</title>
+  <script>(function(){var t=localStorage.getItem('mas-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/app.css') }}?v=13" rel="stylesheet">
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="bg-light">
+<script>const BASE_URL = "{{ request.script_root }}";</script>
+
+  {% if current_user.is_authenticated %}
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-3">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
+        <i class="bi bi-tools"></i> MAS Ops
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="nav">
+        <ul class="navbar-nav me-auto">
+          {% if current_user.is_admin %}
+            <li class="nav-item">
+              <a class="nav-link {% if request.blueprint == 'admin' and request.endpoint == 'admin.dashboard' %}active{% endif %}"
+                 href="{{ url_for('admin.dashboard') }}">
+                <i class="bi bi-speedometer2"></i> Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.blueprint == 'clients' %}active{% endif %}"
+                 href="{{ url_for('clients.clients_list') }}">
+                <i class="bi bi-people"></i> Clients
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'admin.calendar' %}active{% endif %}"
+                 href="{{ url_for('admin.calendar') }}">
+                <i class="bi bi-calendar3"></i> Calendar
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint in ['admin.jobs_list','admin.job_new','admin.job_edit'] %}active{% endif %}"
+                 href="{{ url_for('admin.jobs_list') }}">
+                <i class="bi bi-clipboard-check"></i> Jobs
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.blueprint == 'admin' and 'invoice' in request.endpoint %}active{% endif %}"
+                 href="{{ url_for('admin.invoices') }}">
+                <i class="bi bi-receipt"></i> Invoices
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint and 'archive' in request.endpoint %}active{% endif %}"
+                 href="{{ url_for('admin.archive') }}">
+                <i class="bi bi-archive"></i> Archive
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint in ['admin.users_list','admin.user_new','admin.user_edit'] %}active{% endif %}"
+                 href="{{ url_for('admin.users_list') }}">
+                <i class="bi bi-person-gear"></i> Users
+              </a>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('tech.dashboard') }}">
+                <i class="bi bi-list-task"></i> My Jobs
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+
+        <ul class="navbar-nav align-items-center">
+          <!-- Theme toggle -->
+          <li class="nav-item me-1">
+            <button class="theme-toggle" id="themeToggle" type="button" title="Toggle theme">
+              <i class="bi bi-moon-fill"></i>
+              <i class="bi bi-sun-fill"></i>
+            </button>
+          </li>
+
+          <!-- Notification Bell -->
+          <li class="nav-item dropdown me-2">
+            <a class="nav-link position-relative" href="#" id="bellBtn"
+               data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-bell-fill fs-5"></i>
+              <span id="notif-badge"
+                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+                0
+              </span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end shadow"
+                 style="min-width:320px;max-height:420px;overflow-y:auto;"
+                 id="notif-dropdown">
+              <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                <strong>Notifications</strong>
+                <button class="btn btn-link btn-sm p-0 text-decoration-none"
+                        id="mark-all-read">Mark all read</button>
+              </div>
+              <div id="notif-list">
+                <div class="text-center text-muted py-3 small">Loading…</div>
+              </div>
+            </div>
+          </li>
+
+          <li class="nav-item">
+            <span class="navbar-text me-3">
+              {{ current_user.full_name }}
+              <span class="badge bg-secondary">{{ current_user.role }}</span>
+            </span>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('auth.logout') }}">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  {% endif %}
+
+  <main class="container-fluid">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  {% if current_user.is_authenticated %}
+  <script>
+  (() => {
+    const badge      = document.getElementById('notif-badge');
+    const list       = document.getElementById('notif-list');
+    const markAllBtn = document.getElementById('mark-all-read');
+    const typeIcon   = { success: '✅', warning: '⚠️', info: 'ℹ️' };
+
+    function renderNotifications(data) {
+      if (data.unread > 0) {
+        badge.textContent = data.unread > 99 ? '99+' : data.unread;
+        badge.classList.remove('d-none');
+      } else {
+        badge.classList.add('d-none');
+      }
+      if (!data.notifications.length) {
+        list.innerHTML = '<div class="text-center text-muted py-3 small">No notifications yet.</div>';
+        return;
+      }
+      list.innerHTML = data.notifications.map(n => `
+        <a href="${n.link || '#'}"
+           class="dropdown-item notif-item py-2 px-3 border-bottom ${n.is_read ? 'text-muted' : 'fw-semibold'}"
+           data-id="${n.id}" style="white-space:normal;font-size:.875rem;">
+          <div>${typeIcon[n.type] || 'ℹ️'} ${n.message}</div>
+          <div class="text-muted small fw-normal mt-1">${n.created_at}</div>
+        </a>
+      `).join('');
+      list.querySelectorAll('.notif-item').forEach(el => {
+        el.addEventListener('click', () => {
+          fetch(BASE_URL + `/notifications/${el.dataset.id}/read`, { method: 'POST' }).catch(() => {});
+        });
+      });
+    }
+
+    async function fetchFeed() {
+      try {
+        const r = await fetch(BASE_URL + '/notifications/feed');
+        if (!r.ok) return;
+        renderNotifications(await r.json());
+      } catch (_) {}
+    }
+
+    document.getElementById('bellBtn').addEventListener('show.bs.dropdown', fetchFeed);
+    markAllBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await fetch(BASE_URL + '/notifications/read-all', { method: 'POST' });
+      fetchFeed();
+    });
+
+    fetchFeed();
+    setInterval(fetchFeed, 30000);
+  })();
+
+  (function() {
+    const btn = document.getElementById('themeToggle');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('mas-theme', next);
+    });
+  })();
+  </script>
+  {% endif %}
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

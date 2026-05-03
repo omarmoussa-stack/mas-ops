@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit Job #" ~ job.id if job else "New Job" }} — MAS Ops{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{{ url_for('admin.jobs_list') }}" class="text-muted text-decoration-none small">
+    <i class="bi bi-arrow-left me-1"></i>Jobs
+  </a>
+</div>
+<h5 class="fw-semibold mb-4">{{ "Edit Job #" ~ job.id if job else "Create new job" }}</h5>
+
+<form method="post" class="row g-4">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  {# ═══════════════════════════════════════════════════════════
+     SECTION 1 — Client
+  ══════════════════════════════════════════════════════════════ #}
+  <div class="col-12">
+    <h6 class="text-muted text-uppercase small fw-semibold mb-3 section-label">
+      <i class="bi bi-person me-1"></i>Client
+    </h6>
+
+    {# Hidden field — set by autocomplete when a registry client is selected #}
+    <input type="hidden" name="client_id" id="client_id"
+           value="{{ job.client_id if job and job.client_id else '' }}">
+
+    {# Live-search input #}
+    <div class="mb-3 position-relative">
+      <label class="form-label fw-medium">Search existing client</label>
+      <input type="text" id="client_search" class="form-control"
+             placeholder="Type name or phone…"
+             autocomplete="off"
+             value="{{ job.client.name if job and job.client else '' }}">
+      <div id="client_dropdown"
+           class="dropdown-menu w-100 shadow-sm"
+           style="display:none; position:absolute; z-index:1050; top:100%; left:0; max-height:220px; overflow-y:auto;">
+      </div>
+    </div>
+
+    {# Chip showing selected client with a clear button #}
+    <div id="client_chip" class="mb-3 {% if not (job and job.client_id) %}d-none{% endif %}">
+      <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill border bg-light">
+        <div class="client-chip-avatar" id="chip_initials">
+          {{ job.client.initials if job and job.client else '' }}
+        </div>
+        <span id="chip_name" class="fw-medium small">
+          {{ job.client.name if job and job.client else '' }}
+        </span>
+        <span id="chip_phone" class="text-muted small">
+          {{ job.client.phone if job and job.client else '' }}
+        </span>
+        <button type="button" class="btn-close btn-sm" id="clear_client"
+                aria-label="Remove client"></button>
+      </div>
+      <a id="chip_profile_link"
+         href="{{ url_for('clients.client_profile', client_id=job.client_id) if job and job.client_id else '#' }}"
+         class="ms-2 small text-muted text-decoration-none">
+        <i class="bi bi-box-arrow-up-right"></i> View profile
+      </a>
+    </div>
+
+    <p class="text-muted small mb-3">
+      — or fill in manually for a one-off job —
+    </p>
+
+    <div class="row g-3" id="manual_client_fields">
+      <div class="col-sm-6">
+        <label class="form-label fw-medium">Client name <span class="text-danger">*</span></label>
+        <input type="text" name="client_name" id="field_client_name" class="form-control"
+               value="{{ job.client_name if job else '' }}" required>
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label fw-medium">Phone <span class="text-danger">*</span></label>
+        <input type="text" name="phone" id="field_phone" class="form-control"
+               value="{{ job.phone if job else '' }}" required>
+      </div>
+    </div>
+  </div>
+
+  {# ═══════════════════════════════════════════════════════════
+     SECTION 2 — Location
+  ══════════════════════════════════════════════════════════════ #}
+  <div class="col-12">
+    <h6 class="text-muted text-uppercase small fw-semibold mb-3 section-label">
+      <i class="bi bi-geo-alt me-1"></i>Location
+    </h6>
+    <div class="row g-3">
+      <div class="col-sm-4">
+        <label class="form-label fw-medium">Area</label>
+        <select name="location" class="form-select">
+          {% for loc in config.JOB_LOCATIONS %}
+            <option value="{{ loc }}"
+              {% if job and job.location == loc %}selected{% endif %}>
+              {{ loc }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-sm-8">
+        <label class="form-label fw-medium">Address</label>
+        <input type="text" name="address" class="form-control"
+               value="{{ job.address if job else '' }}"
+               placeholder="Building, street, floor…">
+      </div>
+    </div>
+  </div>
+
+  {# ═══════════════════════════════════════════════════════════
+     SECTION 3 — Job details
+  ══════════════════════════════════════════════════════════════ #}
+  <div class="col-12">
+    <h6 class="text-muted text-uppercase small fw-semibold mb-3 section-label">
+      <i class="bi bi-tools me-1"></i>Job details
+    </h6>
+    <div class="row g-3">
+      <div class="col-sm-5">
+        <label class="form-label fw-medium">Job type <span class="text-danger">*</span></label>
+        <select name="job_type" class="form-select" required>
+          {% for jt in config.JOB_TYPES %}
+            <option value="{{ jt }}"
+              {% if job and job.job_type == jt %}selected{% endif %}>
+              {{ jt }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-sm-4">
+        <label class="form-label fw-medium">Status</label>
+        <select name="status" class="form-select">
+          <option value="Incomplete"  {% if job and job.status == "Incomplete"  %}selected{% endif %}>Incomplete</option>
+          <option value="In Process"  {% if job and job.status == "In Process"  %}selected{% endif %}>In Process</option>
+          <option value="Completed"   {% if job and job.status == "Completed"   %}selected{% endif %}>Completed</option>
+        </select>
+      </div>
+      <div class="col-sm-3">
+        <label class="form-label fw-medium">Amount (EGP)</label>
+        <input type="number" name="amount" class="form-control" min="0" step="0.01"
+               value="{{ job.amount if job and job.amount else '' }}"
+               placeholder="0.00">
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-medium">Description</label>
+        <textarea name="description" class="form-control" rows="2"
+                  placeholder="Scope of work, special instructions…">{{ job.description if job else '' }}</textarea>
+      </div>
+    </div>
+  </div>
+
+  {# ═══════════════════════════════════════════════════════════
+     SECTION 4 — Assignment & scheduling
+  ══════════════════════════════════════════════════════════════ #}
+  <div class="col-12">
+    <h6 class="text-muted text-uppercase small fw-semibold mb-3 section-label">
+      <i class="bi bi-calendar3 me-1"></i>Assignment &amp; schedule
+    </h6>
+    <div class="row g-3">
+      <div class="col-sm-5">
+        <label class="form-label fw-medium">Assign to technician</label>
+        <select name="technician_id" class="form-select">
+          <option value="">— Unassigned —</option>
+          {% for tech in techs %}
+            <option value="{{ tech.id }}"
+              {% if job and job.technician_id == tech.id %}selected{% endif %}>
+              {{ tech.full_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-sm-4">
+        <label class="form-label fw-medium">Expected date</label>
+        <input type="datetime-local" name="expected_date" class="form-control"
+               value="{{ job.expected_date.strftime('%Y-%m-%dT%H:%M') if job and job.expected_date else '' }}">
+      </div>
+    </div>
+  </div>
+
+  {# Tech notes (admin can pre-fill) #}
+  <div class="col-12">
+    <label class="form-label fw-medium">Tech notes</label>
+    <textarea name="tech_notes" class="form-control" rows="2"
+              placeholder="Notes visible to the assigned technician…">{{ job.tech_notes if job else '' }}</textarea>
+  </div>
+
+  {# Submit #}
+  <div class="col-12 d-flex gap-2">
+    <button type="submit" class="btn btn-primary">
+      {{ "Save changes" if job else "Create job" }}
+    </button>
+    <a href="{{ url_for('admin.jobs_list') }}" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+
+</form>
+
+{% if job %}
+<div class="mt-4 pt-3 border-top">
+  <form method="post" action="{{ url_for('admin.job_delete', job_id=job.id) }}"
+        onsubmit="return confirm('Move job #{{ job.id }} ({{ job.client_name }}) to archive?\n\nIt will appear in the Archive tab where you can restore or permanently delete it.')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-outline-danger btn-sm">
+      <i class="bi bi-archive me-1"></i>Delete job (move to archive)
+    </button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<style>
+.section-label { letter-spacing: .05em; border-bottom: 1px solid #e9ecef; padding-bottom: 6px; }
+.client-chip-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: #e7f0fd; color: #1a5cb5;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; flex-shrink: 0;
+}
+#client_dropdown .dropdown-item { font-size: 14px; padding: 8px 14px; cursor: pointer; }
+#client_dropdown .dropdown-item:hover { background: #f0f5ff; }
+#client_dropdown .di-sub { font-size: 12px; color: #6c757d; }
+</style>
+
+<script>
+(function () {
+  const searchInput  = document.getElementById('client_search');
+  const dropdown     = document.getElementById('client_dropdown');
+  const chip         = document.getElementById('client_chip');
+  const clientIdEl   = document.getElementById('client_id');
+  const nameEl       = document.getElementById('field_client_name');
+  const phoneEl      = document.getElementById('field_phone');
+  const chipName     = document.getElementById('chip_name');
+  const chipPhone    = document.getElementById('chip_phone');
+  const chipInitials = document.getElementById('chip_initials');
+  const chipLink     = document.getElementById('chip_profile_link');
+  const clearBtn     = document.getElementById('clear_client');
+
+  let debounce;
+
+  function initials(name) {
+    const p = name.trim().split(' ');
+    return p.length >= 2 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
+  }
+
+  function selectClient(c) {
+    clientIdEl.value   = c.id;
+    nameEl.value       = c.name;
+    phoneEl.value      = c.phone;
+    searchInput.value  = c.name;
+    chipName.textContent     = c.name;
+    chipPhone.textContent    = c.phone;
+    chipInitials.textContent = initials(c.name);
+    chipLink.href = `${BASE_URL}/clients/${c.id}`;
+    chip.classList.remove('d-none');
+    dropdown.style.display = 'none';
+    // Pre-fill location/address if fields are blank
+    const locSel = document.querySelector('[name=location]');
+    const addrEl = document.querySelector('[name=address]');
+    if (locSel && c.location && !locSel.value) {
+      for (let opt of locSel.options) {
+        if (opt.value === c.location) { opt.selected = true; break; }
+      }
+    }
+    if (addrEl && c.address && !addrEl.value) {
+      addrEl.value = c.address;
+    }
+  }
+
+  function clearClient() {
+    clientIdEl.value  = '';
+    searchInput.value = '';
+    chip.classList.add('d-none');
+    nameEl.value  = '';
+    phoneEl.value = '';
+  }
+
+  clearBtn.addEventListener('click', clearClient);
+
+  searchInput.addEventListener('input', function () {
+    clearTimeout(debounce);
+    const q = this.value.trim();
+    if (q.length < 2) { dropdown.style.display = 'none'; return; }
+    debounce = setTimeout(async () => {
+      const res  = await fetch(`${BASE_URL}/clients/api/search?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      if (!data.length) {
+        dropdown.innerHTML =
+          '<div class="dropdown-item disabled text-muted">No matches — fill in manually below</div>';
+      } else {
+        dropdown.innerHTML = data.map(c => `
+          <div class="dropdown-item" data-client='${JSON.stringify(c)}'>
+            <span class="fw-medium">${c.name}</span>
+            <span class="di-sub ms-2">${c.phone}</span>
+            ${c.location ? `<span class="di-sub ms-1">· ${c.location}</span>` : ''}
+          </div>`).join('');
+        dropdown.querySelectorAll('.dropdown-item[data-client]').forEach(el => {
+          el.addEventListener('click', () => selectClient(JSON.parse(el.dataset.client)));
+        });
+      }
+      dropdown.style.display = 'block';
+    }, 220);
+  });
+
+  document.addEventListener('click', e => {
+    if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.style.display = 'none';
+    }
+  });
+})();
+</script>
+{% endblock %}

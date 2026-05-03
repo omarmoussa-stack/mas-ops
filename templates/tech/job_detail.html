@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Job #{{ job.id }} — MAS Ops{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{{ url_for('tech.dashboard') }}" class="text-muted text-decoration-none small">
+    <i class="bi bi-arrow-left me-1"></i>My Jobs
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+
+    {# Status bar #}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body py-2 d-flex align-items-center justify-content-between gap-3 flex-wrap">
+        <span class="fw-medium">Job #{{ job.id }} — {{ job.job_type }}</span>
+        <div class="d-flex gap-2">
+          <button data-status="Incomplete"
+                  class="btn btn-sm btn-outline-primary status-btn {{ 'active' if job.status == 'Incomplete' }}">
+            Incomplete
+          </button>
+          <button data-status="In Process"
+                  class="btn btn-sm btn-outline-warning status-btn {{ 'active' if job.status == 'In Process' }}">
+            In Progress
+          </button>
+          <button data-status="Completed"
+                  class="btn btn-sm btn-outline-success status-btn {{ 'active' if job.status == 'Completed' }}">
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {# Job info #}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+        <h6 class="fw-semibold mb-3">Job details</h6>
+        <dl class="row small mb-0">
+          <dt class="col-4 text-muted fw-normal">Client</dt>
+          <dd class="col-8">{{ job.client_name }}</dd>
+
+          <dt class="col-4 text-muted fw-normal">Phone</dt>
+          <dd class="col-8">
+            <a href="tel:{{ job.phone }}" class="text-decoration-none">{{ job.phone }}</a>
+          </dd>
+
+          <dt class="col-4 text-muted fw-normal">Location</dt>
+          <dd class="col-8">{{ job.location }}</dd>
+
+          {% if job.address %}
+          <dt class="col-4 text-muted fw-normal">Address</dt>
+          <dd class="col-8">{{ job.address }}</dd>
+          {% endif %}
+
+          <dt class="col-4 text-muted fw-normal">Type</dt>
+          <dd class="col-8">{{ job.job_type }}</dd>
+
+          {% if job.expected_date %}
+          <dt class="col-4 text-muted fw-normal">Scheduled</dt>
+          <dd class="col-8">{{ job.expected_date.strftime("%a %d %b %Y, %H:%M") }}</dd>
+          {% endif %}
+
+          {% if job.description %}
+          <dt class="col-4 text-muted fw-normal">Notes</dt>
+          <dd class="col-8">{{ job.description }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    {# Tech notes #}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+        <h6 class="fw-semibold mb-2">My notes</h6>
+        <textarea id="tech-notes" class="form-control mb-2" rows="4"
+                  placeholder="Add notes about this job…">{{ job.tech_notes or '' }}</textarea>
+        <button id="save-notes" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-floppy me-1"></i>Save notes
+        </button>
+        <span id="notes-feedback" class="ms-2 small text-success d-none">Saved</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const jobId = {{ job.id }};
+  const BASE  = BASE_URL;
+
+  async function updateStatus(status) {
+    const notes = document.getElementById('tech-notes').value;
+    const res = await fetch(`${BASE}/tech/api/job/${jobId}/status`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ status, tech_notes: notes }),
+    });
+    if (res.ok) {
+      document.querySelectorAll('.status-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.status === status);
+      });
+    }
+  }
+
+  document.querySelectorAll('.status-btn').forEach(btn => {
+    btn.addEventListener('click', () => updateStatus(btn.dataset.status));
+  });
+
+  document.getElementById('save-notes').addEventListener('click', async () => {
+    const notes  = document.getElementById('tech-notes').value;
+    const status = document.querySelector('.status-btn.active')?.dataset.status
+                   || '{{ job.status }}';
+    const res = await fetch(`${BASE}/tech/api/job/${jobId}/status`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ status, tech_notes: notes }),
+    });
+    if (res.ok) {
+      const fb = document.getElementById('notes-feedback');
+      fb.classList.remove('d-none');
+      setTimeout(() => fb.classList.add('d-none'), 2000);
+    }
+  });
+})();
+</script>
+{% endblock %}

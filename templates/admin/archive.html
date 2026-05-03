@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Archive — MAS Ops{% endblock %}
+
+{% block content %}
+<h4 class="fw-semibold mb-4"><i class="bi bi-archive me-2"></i>Archive</h4>
+
+<ul class="nav nav-tabs mb-4">
+  <li class="nav-item">
+    <a class="nav-link {{ 'active' if tab == 'archived' }}" href="?tab=archived">
+      Deleted jobs
+      {% if counts.archived %}<span class="badge bg-secondary ms-1">{{ counts.archived }}</span>{% endif %}
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {{ 'active' if tab == 'completed' }}" href="?tab=completed">
+      Completed jobs
+      {% if counts.completed %}<span class="badge bg-secondary ms-1">{{ counts.completed }}</span>{% endif %}
+    </a>
+  </li>
+</ul>
+
+<form method="get" class="d-flex gap-2 mb-3">
+  <input type="hidden" name="tab" value="{{ tab }}">
+  <input type="text" name="client" value="{{ client_filter }}"
+         class="form-control form-control-sm w-auto"
+         placeholder="Filter by client name…">
+  <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+  {% if client_filter %}
+    <a href="?tab={{ tab }}" class="btn btn-outline-secondary btn-sm">Clear</a>
+  {% endif %}
+</form>
+
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 small">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Client</th>
+          <th>Type</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Tech</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for job in jobs %}
+        <tr>
+          <td class="text-muted">{{ job.id }}</td>
+          <td>
+            <span class="fw-medium">{{ job.client_name }}</span>
+            <div class="text-muted" style="font-size:11px">{{ job.phone }}</div>
+          </td>
+          <td>{{ job.job_type }}</td>
+          <td class="text-muted">{{ job.location }}</td>
+          <td>
+            {% if job.status == "Completed" %}
+              <span class="badge bg-success">Done</span>
+            {% elif job.status == "In Process" %}
+              <span class="badge bg-warning">In Progress</span>
+            {% else %}
+              <span class="badge bg-primary">Incomplete</span>
+            {% endif %}
+          </td>
+          <td class="text-muted">{{ job.technician.full_name if job.technician else "—" }}</td>
+          <td class="text-muted">
+            {{ job.updated_at.strftime("%d %b %Y") if job.updated_at else "—" }}
+          </td>
+          <td class="text-nowrap">
+            {% if tab == 'archived' %}
+              <form method="post" action="{{ url_for('admin.archive_restore', job_id=job.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-outline-success btn-sm" title="Restore">
+                  <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+              </form>
+              <form method="post" action="{{ url_for('admin.archive_destroy', job_id=job.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-outline-danger btn-sm" title="Delete permanently"
+                        onclick="return confirm('Permanently delete job #{{ job.id }}?\n\nThis cannot be undone.')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            {% else %}
+              <a href="{{ url_for('admin.job_edit', job_id=job.id) }}"
+                 class="btn btn-outline-secondary btn-sm" title="View">
+                <i class="bi bi-eye"></i>
+              </a>
+              <form method="post" action="{{ url_for('admin.job_delete', job_id=job.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-outline-danger btn-sm" title="Move to deleted"
+                        onclick="return confirm('Move job #{{ job.id }} to archive?')">
+                  <i class="bi bi-archive"></i>
+                </button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-5">
+            {% if tab == 'archived' %}No deleted jobs.{% else %}No completed jobs yet.{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

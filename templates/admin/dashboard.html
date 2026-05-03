@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — MAS Ops{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0 fw-semibold"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h4>
+  <a href="{{ url_for('admin.job_new') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>New Job
+  </a>
+</div>
+
+{# ── Stat cards ── #}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-2">
+    <a href="{{ url_for('admin.jobs_list', status='Incomplete') }}" class="stat-card is-incomplete">
+      <div class="stat-label">Incomplete</div>
+      <div class="stat-val">{{ stats.incomplete }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-lg-2">
+    <a href="{{ url_for('admin.jobs_list', status='In Process') }}" class="stat-card is-progress">
+      <div class="stat-label">In Progress</div>
+      <div class="stat-val">{{ stats.in_process }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-lg-2">
+    <a href="{{ url_for('admin.jobs_list', status='Completed') }}" class="stat-card is-completed">
+      <div class="stat-label">Completed</div>
+      <div class="stat-val">{{ stats.completed }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-lg-2">
+    <a href="{{ url_for('admin.invoices') }}" class="stat-card is-pending">
+      <div class="stat-label">Pending Invoices</div>
+      <div class="stat-val">{{ stats.pending_invoices }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-lg-2">
+    <a href="{{ url_for('clients.clients_list') }}" class="stat-card is-clients">
+      <div class="stat-label">Total Clients</div>
+      <div class="stat-val">{{ stats.total_clients }}</div>
+    </a>
+  </div>
+</div>
+
+{# ── Recent jobs ── #}
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+    <span class="fw-medium">Recent jobs</span>
+    <a href="{{ url_for('admin.jobs_list') }}" class="btn btn-outline-secondary btn-sm">
+      View all
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 small">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Client</th>
+          <th>Type</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Tech</th>
+          <th>Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for job in recent %}
+        <tr>
+          <td class="text-muted">{{ job.id }}</td>
+          <td>
+            {% if job.client_id %}
+              <a href="{{ url_for('clients.client_profile', client_id=job.client_id) }}"
+                 class="text-decoration-none fw-medium">{{ job.client_name }}</a>
+            {% else %}
+              {{ job.client_name }}
+            {% endif %}
+          </td>
+          <td>{{ job.job_type }}</td>
+          <td class="text-muted">{{ job.location }}</td>
+          <td>
+            {% if job.status == "Completed" %}
+              <span class="badge bg-success">Done</span>
+            {% elif job.status == "In Process" %}
+              <span class="badge bg-warning text-dark">In Progress</span>
+            {% else %}
+              <span class="badge bg-primary">Incomplete</span>
+            {% endif %}
+          </td>
+          <td class="text-muted">{{ job.technician.full_name if job.technician else "—" }}</td>
+          <td class="text-muted">
+            {{ job.expected_date.strftime("%d %b") if job.expected_date else "—" }}
+          </td>
+          <td class="text-nowrap">
+            <a href="{{ url_for('admin.job_edit', job_id=job.id) }}"
+               class="btn btn-outline-secondary btn-sm me-1" title="Edit">
+              <i class="bi bi-pencil-square"></i>
+            </a>
+            <form method="post" action="{{ url_for('admin.job_delete', job_id=job.id) }}"
+                  class="d-inline"
+                  onsubmit="return confirm('Move job #{{ job.id }} ({{ job.client_name }}) to archive?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete (move to archive)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="8" class="text-center text-muted py-4">No jobs yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

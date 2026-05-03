@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Login — MAS Ops{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-sm-10 col-md-6 col-lg-4">
+
+    <div class="text-center mb-4">
+      <i class="bi bi-tools display-4 text-primary"></i>
+      <h3 class="fw-bold mt-2">MAS Ops</h3>
+      <p class="text-muted small">Operations Management</p>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label fw-medium">Username</label>
+            <input type="text" name="username" class="form-control"
+                   autofocus autocomplete="username" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-medium">Password</label>
+            <input type="password" name="password" class="form-control"
+                   autocomplete="current-password" required>
+          </div>
+          <div class="mb-4 form-check">
+            <input type="checkbox" name="remember" class="form-check-input" id="remember">
+            <label class="form-check-label text-muted small" for="remember">
+              Remember me
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Sign in</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

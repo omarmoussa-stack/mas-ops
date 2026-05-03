@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit" if client else "New Client" }} — MAS Ops{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{{ url_for('clients.clients_list') }}" class="text-muted text-decoration-none small">
+    <i class="bi bi-arrow-left me-1"></i>Clients
+  </a>
+  {% if client %}
+  <span class="text-muted small">/</span>
+  <a href="{{ url_for('clients.client_profile', client_id=client.id) }}"
+     class="text-muted text-decoration-none small">{{ client.name }}</a>
+  {% endif %}
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <h5 class="fw-semibold mb-4">
+      {{ "Edit client" if client else "Add new client" }}
+    </h5>
+
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="mb-3">
+        <label class="form-label fw-medium">Full name <span class="text-danger">*</span></label>
+        <input type="text" name="name" class="form-control"
+               value="{{ client.name if client else '' }}" required
+               placeholder="e.g. Mohamed Nasser">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-medium">Phone <span class="text-danger">*</span></label>
+        <input type="text" name="phone" class="form-control"
+               value="{{ client.phone if client else '' }}" required
+               placeholder="e.g. 01012345678">
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-sm-6">
+          <label class="form-label fw-medium">Area</label>
+          <select name="location" class="form-select">
+            <option value="">— Select area —</option>
+            {% set locs = ["East Cairo","West Cairo","North Coast","New Capital","Other"] %}
+            {% for loc in locs %}
+              <option value="{{ loc }}"
+                {% if client and client.location == loc %}selected{% endif %}>
+                {{ loc }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-6">
+          <label class="form-label fw-medium">Default address</label>
+          <input type="text" name="address" class="form-control"
+                 value="{{ client.address if client else '' }}"
+                 placeholder="Building / street">
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-medium">Internal notes</label>
+        <textarea name="notes" class="form-control" rows="3"
+                  placeholder="Gate code, floor, scheduling preferences…">{{ client.notes if client else '' }}</textarea>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          {{ "Save changes" if client else "Add client" }}
+        </button>
+        <a href="{{ url_for('clients.client_profile', client_id=client.id) if client else url_for('clients.clients_list') }}"
+           class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

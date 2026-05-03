@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Clients — MAS Ops{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0"><i class="bi bi-people-fill me-2"></i>Clients</h4>
+  <a href="{{ url_for('clients.client_new') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>New Client
+  </a>
+</div>
+
+<form method="get" class="row g-2 mb-4">
+  <div class="col-sm-5">
+    <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm"
+           placeholder="Search name or phone…">
+  </div>
+  <div class="col-sm-3">
+    <select name="location" class="form-select form-select-sm">
+      <option value="">All areas</option>
+      {% for loc in locations %}
+        <option value="{{ loc }}" {% if loc == location_filter %}selected{% endif %}>{{ loc }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+    {% if q or location_filter %}
+      <a href="{{ url_for('clients.clients_list') }}" class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
+    {% endif %}
+  </div>
+</form>
+
+{% if clients %}
+<div class="row g-3">
+  {% for c in clients %}
+  <div class="col-md-6 col-xl-4">
+    <a href="{{ url_for('clients.client_profile', client_id=c.id) }}"
+       class="text-decoration-none">
+      <div class="card h-100 border-0 shadow-sm client-card">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="client-avatar">{{ c.initials }}</div>
+            <div>
+              <div class="fw-semibold text-dark">{{ c.name }}</div>
+              <div class="text-muted small">{{ c.phone }}</div>
+            </div>
+          </div>
+          <div class="d-flex gap-2 text-muted small">
+            <span class="badge bg-light text-secondary border">
+              <i class="bi bi-geo-alt me-1"></i>{{ c.location or "—" }}
+            </span>
+            <span class="badge bg-light text-secondary border">
+              <i class="bi bi-briefcase me-1"></i>{{ c.total_jobs }} job{{ 's' if c.total_jobs != 1 }}
+            </span>
+            {% if c.total_revenue > 0 %}
+            <span class="badge bg-light text-secondary border">
+              EGP {{ "{:,.0f}".format(c.total_revenue) }}
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="text-center text-muted py-5">
+  <i class="bi bi-people display-4 d-block mb-2 opacity-25"></i>
+  No clients found.
+  {% if not q and not location_filter %}
+    <a href="{{ url_for('clients.client_new') }}">Add your first client</a>.
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<style>
+.client-card { transition: box-shadow .15s; }
+.client-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1) !important; }
+.client-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: #e7f0fd; color: #1a5cb5;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 14px; flex-shrink: 0;
+}
+</style>
+{% endblock %}

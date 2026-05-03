@@ -1,0 +1,15 @@
+*.db
+*.db-shm
+*.db-wal
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.DS_Store
+instance/
+*.log
+.deploy_history.txt
+deploy.sh
+.idea/
+.vscode/

@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Invoice — Job #{{ job.id }} — MAS Ops{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{{ url_for('admin.invoices') }}" class="text-muted text-decoration-none small">
+    <i class="bi bi-arrow-left me-1"></i>Invoices
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+
+        {# Header #}
+        <div class="d-flex justify-content-between align-items-start mb-4">
+          <div>
+            <h5 class="fw-bold mb-1">Invoice — Job #{{ job.id }}</h5>
+            <div class="text-muted small">{{ job.job_type }} · {{ job.location }}</div>
+          </div>
+          <span class="badge {{ 'bg-success' if job.invoiced else 'bg-warning text-dark' }} fs-6">
+            {{ "Invoiced" if job.invoiced else "Pending" }}
+          </span>
+        </div>
+
+        {# Client info #}
+        <dl class="row small mb-4">
+          <dt class="col-3 text-muted fw-normal">Client</dt>
+          <dd class="col-9">{{ job.client_name }}</dd>
+          <dt class="col-3 text-muted fw-normal">Phone</dt>
+          <dd class="col-9">{{ job.phone }}</dd>
+          <dt class="col-3 text-muted fw-normal">Address</dt>
+          <dd class="col-9">{{ job.address or "—" }}</dd>
+          <dt class="col-3 text-muted fw-normal">Completed</dt>
+          <dd class="col-9">
+            {{ job.completion_date.strftime("%d %b %Y") if job.completion_date else "—" }}
+          </dd>
+          {% if job.technician %}
+          <dt class="col-3 text-muted fw-normal">Technician</dt>
+          <dd class="col-9">{{ job.technician.full_name }}</dd>
+          {% endif %}
+        </dl>
+
+        {# Line items #}
+        <h6 class="fw-semibold mb-2">Line items</h6>
+        <table class="table table-sm border mb-2" id="items-table">
+          <thead class="table-light">
+            <tr>
+              <th>Description</th>
+              <th style="width:100px">Qty</th>
+              <th style="width:130px">Unit price</th>
+              <th style="width:130px">Total</th>
+              <th style="width:40px"></th>
+            </tr>
+          </thead>
+          <tbody id="items-body">
+          {% for item in saved_items %}
+            <tr>
+              <td><input type="text" class="form-control form-control-sm item-desc"
+                         value="{{ item.desc }}"></td>
+              <td><input type="number" class="form-control form-control-sm item-qty"
+                         value="{{ item.qty }}" min="1"></td>
+              <td><input type="number" class="form-control form-control-sm item-price"
+                         value="{{ item.price }}" min="0" step="0.01"></td>
+              <td class="item-total align-middle text-end small">
+                EGP {{ "{:,.0f}".format(item.qty * item.price) }}
+              </td>
+              <td>
+                <button type="button" class="btn btn-link btn-sm p-0 text-danger remove-row">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+
+        <button type="button" id="add-row" class="btn btn-outline-secondary btn-sm mb-3">
+          <i class="bi bi-plus me-1"></i>Add row
+        </button>
+
+        {# Total #}
+        <div class="d-flex justify-content-end align-items-center gap-3 mb-3">
+          <span class="fw-semibold">Total:</span>
+          <span class="fw-bold fs-5" id="grand-total">
+            EGP {{ "{:,.0f}".format(job.amount) if job.amount else "0" }}
+          </span>
+        </div>
+
+        {# Actions #}
+        <div class="d-flex gap-2 flex-wrap">
+          <button id="save-btn" class="btn btn-primary btn-sm">
+            <i class="bi bi-floppy me-1"></i>Save amounts
+          </button>
+
+          <a href="{{ url_for('admin.invoice_pdf', job_id=job.id) }}"
+             target="_blank"
+             class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-earmark-pdf me-1"></i>Preview PDF
+          </a>
+
+          <a href="{{ url_for('admin.invoice_pdf_download', job_id=job.id) }}"
+             class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-download me-1"></i>Download PDF
+          </a>
+
+          <a href="{{ url_for('admin.invoice_send_whatsapp', job_id=job.id) }}"
+             target="_blank"
+             class="btn btn-success btn-sm">
+            <i class="bi bi-whatsapp me-1"></i>Send via WhatsApp
+          </a>
+
+          <a href="{{ url_for('admin.invoice_send_email', job_id=job.id) }}"
+             class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-envelope me-1"></i>Send via Email
+          </a>
+
+          {% if not job.invoiced %}
+          <form method="post" action="{{ url_for('admin.invoice_mark', job_id=job.id) }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-success btn-sm"
+                    onclick="return confirm('Mark as invoiced?')">
+              <i class="bi bi-check-lg me-1"></i>Mark as invoiced
+            </button>
+          </form>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  function recalc() {
+    let total = 0;
+    document.querySelectorAll('#items-body tr').forEach(row => {
+      const qty   = parseFloat(row.querySelector('.item-qty')?.value)   || 0;
+      const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+      const line  = qty * price;
+      total += line;
+      const t = row.querySelector('.item-total');
+      if (t) t.textContent = 'EGP ' + line.toLocaleString('en-EG', {maximumFractionDigits:0});
+    });
+    document.getElementById('grand-total').textContent =
+      'EGP ' + total.toLocaleString('en-EG', {maximumFractionDigits:0});
+  }
+
+  function addRow(desc='', qty=1, price=0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" class="form-control form-control-sm item-desc" value="${desc}"></td>
+      <td><input type="number" class="form-control form-control-sm item-qty" value="${qty}" min="1"></td>
+      <td><input type="number" class="form-control form-control-sm item-price" value="${price}" min="0" step="0.01"></td>
+      <td class="item-total align-middle text-end small">EGP 0</td>
+      <td><button type="button" class="btn btn-link btn-sm p-0 text-danger remove-row"><i class="bi bi-x-lg"></i></button></td>`;
+    document.getElementById('items-body').appendChild(tr);
+    recalc();
+  }
+
+  document.getElementById('add-row').addEventListener('click', () => addRow());
+
+  document.getElementById('items-body').addEventListener('input', recalc);
+  document.getElementById('items-body').addEventListener('click', e => {
+    if (e.target.closest('.remove-row')) {
+      e.target.closest('tr').remove();
+      recalc();
+    }
+  });
+
+  document.getElementById('save-btn').addEventListener('click', async () => {
+    const items = [];
+    document.querySelectorAll('#items-body tr').forEach(row => {
+      items.push({
+        desc:  row.querySelector('.item-desc').value,
+        qty:   parseFloat(row.querySelector('.item-qty').value)   || 1,
+        price: parseFloat(row.querySelector('.item-price').value) || 0,
+      });
+    });
+    const total = items.reduce((s, i) => s + i.qty * i.price, 0);
+    const res = await fetch('{{ url_for("admin.invoice_save_amount", job_id=job.id) }}', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', 'X-CSRFToken': '{{ csrf_token() }}'},
+      body: JSON.stringify({amount: total, items}),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('save-btn').textContent = 'Saved!';
+      setTimeout(() => {
+        document.getElementById('save-btn').innerHTML = '<i class="bi bi-floppy me-1"></i>Save amounts';
+      }, 2000);
+    }
+  });
+
+  recalc();
+})();
+</script>
+{% endblock %}

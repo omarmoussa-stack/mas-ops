@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}{{ client.name }} — MAS Ops{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:16px;">
+  <a href="{{ url_for('clients.clients_list') }}" style="color:var(--text-muted);text-decoration:none;font-size:13px;">
+    ← Clients
+  </a>
+</div>
+
+<div style="max-width:680px;">
+
+  <!-- Main client card -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:14px;">
+
+    <!-- Header: avatar + name + button -->
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--info-bg);color:var(--info-fg);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;flex-shrink:0;">
+        {{ client.initials }}
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:2px;">{{ client.name }}</div>
+        <div style="font-size:13px;color:var(--text-muted);">{{ client.phone }} &nbsp;·&nbsp; {{ client.location or '—' }}</div>
+      </div>
+      <a href="{{ url_for('admin.job_new') }}" style="font-size:13px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);background:var(--surface-2);">
+        + New job
+      </a>
+    </div>
+
+    <!-- Stat boxes -->
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <div style="background:var(--surface-2);border-radius:8px;padding:10px 14px;flex:1;min-width:100px;">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:2px;">Total jobs</div>
+        <div style="font-size:20px;font-weight:600;color:var(--text);">{{ client.total_jobs }}</div>
+      </div>
+      <div style="background:var(--surface-2);border-radius:8px;padding:10px 14px;flex:1;min-width:100px;">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:2px;">Total revenue</div>
+        <div style="font-size:20px;font-weight:600;color:var(--text);">EGP {{ "{:,.0f}".format(client.total_revenue) }}</div>
+      </div>
+      <div style="background:var(--surface-2);border-radius:8px;padding:10px 14px;flex:1;min-width:100px;">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:2px;">Last job</div>
+        <div style="font-size:20px;font-weight:600;color:var(--text);">
+          {{ client.last_job_date.strftime("%d %b") if client.last_job_date else "—" }}
+        </div>
+      </div>
+      {% set ut = client.usual_technician %}
+      <div style="background:var(--surface-2);border-radius:8px;padding:10px 14px;flex:1;min-width:100px;">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:2px;">Usual tech</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text);">{{ ut.full_name if ut else "—" }}</div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    {% if client.notes %}
+    <div style="font-size:12px;color:var(--text-muted);background:var(--surface-2);border-radius:8px;padding:8px 12px;margin-bottom:16px;">
+      {{ client.notes }}
+    </div>
+    {% endif %}
+
+    <!-- Job history label -->
+    <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">
+      Job history
+    </div>
+
+    <!-- Job rows -->
+    {% for job in jobs[:5] %}
+    <div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:13px;">
+      {% if job.status == "Completed" %}
+        <span class="badge bg-success" style="white-space:nowrap;">Done</span>
+      {% elif job.status == "In Process" %}
+        <span class="badge bg-warning" style="white-space:nowrap;">In progress</span>
+      {% else %}
+        <span class="badge bg-primary" style="white-space:nowrap;">Scheduled</span>
+      {% endif %}
+      <span style="flex:1;color:var(--text);">{{ job.job_type }}</span>
+      <span style="color:var(--text-muted);">{{ job.technician.full_name if job.technician else "—" }}</span>
+      <span style="color:var(--text-muted);min-width:80px;text-align:right;">
+        {{ job.created_at.strftime("%d %b %Y") }}
+      </span>
+      <a href="{{ url_for('admin.job_edit', job_id=job.id) }}" style="color:var(--text-muted);font-size:12px;">✎</a>
+    </div>
+    {% else %}
+    <div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:13px;">No jobs yet.</div>
+    {% endfor %}
+
+    {% if jobs|length > 5 %}
+    <div style="padding-top:10px;text-align:center;">
+      <a href="{{ url_for('admin.jobs_list') }}" style="font-size:12px;color:var(--text-muted);text-decoration:none;border:1px solid var(--border);padding:4px 14px;border-radius:8px;">
+        Show all {{ jobs|length }} jobs
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Other clients in same area -->
+  {% if other_clients %}
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem 1.25rem;">
+    <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">
+      Other clients — {{ client.location }}
+    </div>
+    {% for c in other_clients %}
+    <a href="{{ url_for('clients.client_profile', client_id=c.id) }}" style="text-decoration:none;">
+      <div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:13px;">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--info-bg);color:var(--info-fg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">
+          {{ c.initials }}
+        </div>
+        <span style="flex:1;color:var(--text);">{{ c.name }}</span>
+        <span style="color:var(--text-muted);font-size:12px;">{{ c.total_jobs }} job{{ 's' if c.total_jobs != 1 }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Edit button -->
+  <div style="margin-top:14px;">
+    <a href="{{ url_for('clients.client_edit', client_id=client.id) }}"
+       style="font-size:13px;padding:8px 20px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);background:var(--surface-2);">
+      ✎ Edit client
+    </a>
+  </div>
+
+</div>
+{% endblock %}

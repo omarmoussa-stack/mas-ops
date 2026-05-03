@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Jobs — MAS Ops{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0 fw-semibold"><i class="bi bi-clipboard-check me-2"></i>Jobs</h4>
+  <a href="{{ url_for('admin.job_new') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>New Job
+  </a>
+</div>
+
+{# Status filter pills #}
+<div class="mb-3 d-flex gap-2 flex-wrap">
+  <a href="{{ url_for('admin.jobs_list') }}"
+     class="btn btn-sm {{ 'btn-dark' if not status_filter else 'btn-outline-secondary' }}">
+    All
+  </a>
+  <a href="?status=Incomplete"
+     class="btn btn-sm {{ 'btn-primary' if status_filter == 'Incomplete' else 'btn-outline-primary' }}">
+    Incomplete
+  </a>
+  <a href="?status=In+Process"
+     class="btn btn-sm {{ 'btn-warning' if status_filter == 'In Process' else 'btn-outline-warning' }}">
+    In Progress
+  </a>
+  <a href="?status=Completed"
+     class="btn btn-sm {{ 'btn-success' if status_filter == 'Completed' else 'btn-outline-success' }}">
+    Completed
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 small">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Client</th>
+          <th>Type</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Technician</th>
+          <th>Expected</th>
+          <th>Amount</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for job in jobs %}
+        <tr>
+          <td class="text-muted">{{ job.id }}</td>
+          <td>
+            {% if job.client_id %}
+              <a href="{{ url_for('clients.client_profile', client_id=job.client_id) }}"
+                 class="text-decoration-none fw-medium">{{ job.client_name }}</a>
+            {% else %}
+              <span class="fw-medium">{{ job.client_name }}</span>
+            {% endif %}
+            <div class="text-muted" style="font-size:11px">{{ job.phone }}</div>
+          </td>
+          <td>{{ job.job_type }}</td>
+          <td class="text-muted">{{ job.location }}</td>
+          <td>
+            {% if job.status == "Completed" %}
+              <span class="badge bg-success">Done</span>
+            {% elif job.status == "In Process" %}
+              <span class="badge bg-warning text-dark">In Progress</span>
+            {% else %}
+              <span class="badge bg-primary">Incomplete</span>
+            {% endif %}
+          </td>
+          <td class="text-muted">{{ job.technician.full_name if job.technician else "—" }}</td>
+          <td class="text-muted">
+            {{ job.expected_date.strftime("%d %b %Y") if job.expected_date else "—" }}
+          </td>
+          <td class="text-muted">
+            {{ "EGP {:,.0f}".format(job.amount) if job.amount else "—" }}
+          </td>
+          <td class="text-nowrap">
+            <a href="{{ url_for('admin.job_edit', job_id=job.id) }}"
+               class="btn btn-outline-secondary btn-sm me-1" title="Edit">
+              <i class="bi bi-pencil-square"></i>
+            </a>
+            <form method="post" action="{{ url_for('admin.job_delete', job_id=job.id) }}"
+                  class="d-inline"
+                  onsubmit="return confirm('Move job #{{ job.id }} ({{ job.client_name }}) to archive?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete (move to archive)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="9" class="text-center text-muted py-5">
+            No jobs found.
+            <a href="{{ url_for('admin.job_new') }}">Create one</a>.
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
