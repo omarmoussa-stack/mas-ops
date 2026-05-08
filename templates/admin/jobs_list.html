@@ -51,7 +51,7 @@
       </thead>
       <tbody>
       {% for job in jobs %}
-        <tr class="{{ 'table-purple' if job.status == 'Visit' else '' }}">
+        <tr class="{{ 'visit-row' if job.status == 'Visit' else '' }}">
           <td class="text-muted">{{ job.id }}</td>
           <td>
             {% if job.client_id %}
@@ -149,6 +149,7 @@
   .btn-purple:hover   { background:#5a32a3; color:#fff; }
   .btn-outline-purple { border-color:#6f42c1; color:#6f42c1; }
   .btn-outline-purple:hover { background:#6f42c1; color:#fff; }
-  .table-purple       { background:#f3eeff !important; }
+  .visit-row          { background:#2d1f42 !important; border-left: 3px solid #6f42c1; }
+  [data-bs-theme="light"] .visit-row { background:#f3eeff !important; }
 </style>
 {% endblock %}
