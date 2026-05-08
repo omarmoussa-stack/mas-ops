@@ -15,6 +15,10 @@
      class="btn btn-sm {{ 'btn-dark' if not status_filter else 'btn-outline-secondary' }}">
     All
   </a>
+  <a href="?status=Visit"
+     class="btn btn-sm {{ 'btn-purple' if status_filter == 'Visit' else 'btn-outline-purple' }}">
+    <i class="bi bi-calendar2-check me-1"></i>Visits
+  </a>
   <a href="?status=Incomplete"
      class="btn btn-sm {{ 'btn-primary' if status_filter == 'Incomplete' else 'btn-outline-primary' }}">
     Incomplete
@@ -47,7 +51,7 @@
       </thead>
       <tbody>
       {% for job in jobs %}
-        <tr>
+        <tr class="{{ 'table-purple' if job.status == 'Visit' else '' }}">
           <td class="text-muted">{{ job.id }}</td>
           <td>
             {% if job.client_id %}
@@ -61,7 +65,16 @@
           <td>{{ job.job_type }}</td>
           <td class="text-muted">{{ job.location }}</td>
           <td>
-            {% if job.status == "Completed" %}
+            {% if job.status == "Visit" %}
+              <span class="badge" style="background:#6f42c1">
+                <i class="bi bi-calendar2-check me-1"></i>Visit
+              </span>
+              {% if job.confirmed %}
+                <br><span class="badge bg-success mt-1">✅ Confirmed</span>
+              {% else %}
+                <br><span class="badge bg-warning text-dark mt-1">Awaiting</span>
+              {% endif %}
+            {% elif job.status == "Completed" %}
               <span class="badge bg-success">Done</span>
             {% elif job.status == "In Process" %}
               <span class="badge bg-warning text-dark">In Progress</span>
@@ -77,15 +90,51 @@
             {{ "EGP {:,.0f}".format(job.amount) if job.amount else "—" }}
           </td>
           <td class="text-nowrap">
+
+            {# WhatsApp confirm button — only for Visits #}
+            {% if job.status == "Visit" %}
+              <a href="{{ url_for('appointments.whatsapp_confirm', visit_id=job.id) }}"
+                 class="btn btn-success btn-sm me-1" title="Send WhatsApp Confirmation"
+                 target="_blank">
+                <i class="bi bi-whatsapp"></i>
+              </a>
+
+              {# Manual confirm if not yet confirmed #}
+              {% if not job.confirmed %}
+              <form method="POST"
+                    action="{{ url_for('appointments.manual_confirm', visit_id=job.id) }}"
+                    class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-success btn-sm me-1"
+                        title="Mark as Confirmed">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+              </form>
+              {% endif %}
+
+              {# Convert to Job #}
+              <form method="POST"
+                    action="{{ url_for('appointments.convert_to_job', visit_id=job.id) }}"
+                    class="d-inline"
+                    onsubmit="return confirm('Convert this visit to a job?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm me-1"
+                        style="background:#6f42c1;color:#fff;border-color:#6f42c1"
+                        title="Convert to Job">
+                  <i class="bi bi-arrow-right-circle me-1"></i>Job
+                </button>
+              </form>
+            {% endif %}
+
             <a href="{{ url_for('admin.job_edit', job_id=job.id) }}"
                class="btn btn-outline-secondary btn-sm me-1" title="Edit">
               <i class="bi bi-pencil-square"></i>
             </a>
             <form method="post" action="{{ url_for('admin.job_delete', job_id=job.id) }}"
                   class="d-inline"
-                  onsubmit="return confirm('Move job #{{ job.id }} ({{ job.client_name }}) to archive?');">
+                  onsubmit="return confirm('Archive job #{{ job.id }}?');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete (move to archive)">
+              <button type="submit" class="btn btn-outline-danger btn-sm" title="Archive">
                 <i class="bi bi-trash"></i>
               </button>
             </form>
@@ -103,4 +152,12 @@
     </table>
   </div>
 </div>
+
+<style>
+  .btn-purple         { background:#6f42c1; border-color:#6f42c1; color:#fff; }
+  .btn-purple:hover   { background:#5a32a3; color:#fff; }
+  .btn-outline-purple { border-color:#6f42c1; color:#6f42c1; }
+  .btn-outline-purple:hover { background:#6f42c1; color:#fff; }
+  .table-purple       { background:#f3eeff !important; }
+</style>
 {% endblock %}

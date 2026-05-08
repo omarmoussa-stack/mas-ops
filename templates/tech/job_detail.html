@@ -1,84 +1,113 @@
 {% extends "base.html" %}
-{% block title %}Job #{{ job.id }} — MAS Ops{% endblock %}
+{% block title %}مهمة #{{ job.id }} — MAS Ops{% endblock %}
 
 {% block content %}
-<div class="d-flex align-items-center gap-2 mb-4">
+<div class="d-flex align-items-center gap-2 mb-3">
   <a href="{{ url_for('tech.dashboard') }}" class="text-muted text-decoration-none small">
-    <i class="bi bi-arrow-left me-1"></i>My Jobs
+    <i class="bi bi-arrow-left me-1"></i>مهامي
   </a>
 </div>
 
 <div class="row justify-content-center">
-  <div class="col-lg-7">
+  <div class="col-lg-6">
 
-    {# Status bar #}
+    {# ── Big Arabic status buttons ──────────────────────────────── #}
     <div class="card border-0 shadow-sm mb-3">
-      <div class="card-body py-2 d-flex align-items-center justify-content-between gap-3 flex-wrap">
-        <span class="fw-medium">Job #{{ job.id }} — {{ job.job_type }}</span>
-        <div class="d-flex gap-2">
+      <div class="card-body p-3">
+        <p class="text-muted small mb-2 text-center">اضغط لتحديث الحالة</p>
+        <div class="d-grid gap-2">
+
           <button data-status="Incomplete"
-                  class="btn btn-sm btn-outline-primary status-btn {{ 'active' if job.status == 'Incomplete' }}">
-            Incomplete
+                  class="btn btn-tap btn-tap-blue status-btn {{ 'active-btn' if job.status == 'Incomplete' }}">
+            🔵  لم تبدأ
           </button>
+
           <button data-status="In Process"
-                  class="btn btn-sm btn-outline-warning status-btn {{ 'active' if job.status == 'In Process' }}">
-            In Progress
+                  class="btn btn-tap btn-tap-yellow status-btn {{ 'active-btn' if job.status == 'In Process' }}">
+            🟡  شغّال دلوقتي
           </button>
+
           <button data-status="Completed"
-                  class="btn btn-sm btn-outline-success status-btn {{ 'active' if job.status == 'Completed' }}">
-            Done
+                  class="btn btn-tap btn-tap-green status-btn {{ 'active-btn' if job.status == 'Completed' }}"
+                  id="doneBtn">
+            🟢  خلّصت ✅
           </button>
+
         </div>
       </div>
     </div>
 
-    {# Job info #}
+    {# ── Job info ──────────────────────────────────────────────── #}
     <div class="card border-0 shadow-sm mb-3">
       <div class="card-body">
-        <h6 class="fw-semibold mb-3">Job details</h6>
+        <h6 class="fw-semibold mb-3 text-center">تفاصيل المهمة</h6>
         <dl class="row small mb-0">
-          <dt class="col-4 text-muted fw-normal">Client</dt>
-          <dd class="col-8">{{ job.client_name }}</dd>
+          <dt class="col-5 text-muted fw-normal">العميل</dt>
+          <dd class="col-7 fw-semibold">{{ job.client_name }}</dd>
 
-          <dt class="col-4 text-muted fw-normal">Phone</dt>
-          <dd class="col-8">
-            <a href="tel:{{ job.phone }}" class="text-decoration-none">{{ job.phone }}</a>
+          <dt class="col-5 text-muted fw-normal">الهاتف</dt>
+          <dd class="col-7">
+            <a href="tel:{{ job.phone }}" class="text-decoration-none btn btn-sm btn-outline-success w-100">
+              <i class="bi bi-telephone me-1"></i>{{ job.phone }}
+            </a>
           </dd>
 
-          <dt class="col-4 text-muted fw-normal">Location</dt>
-          <dd class="col-8">{{ job.location }}</dd>
+          <dt class="col-5 text-muted fw-normal mt-2">المنطقة</dt>
+          <dd class="col-7 mt-2">{{ job.location }}</dd>
 
           {% if job.address %}
-          <dt class="col-4 text-muted fw-normal">Address</dt>
-          <dd class="col-8">{{ job.address }}</dd>
+          <dt class="col-5 text-muted fw-normal">العنوان</dt>
+          <dd class="col-7">{{ job.address }}</dd>
           {% endif %}
 
-          <dt class="col-4 text-muted fw-normal">Type</dt>
-          <dd class="col-8">{{ job.job_type }}</dd>
+          <dt class="col-5 text-muted fw-normal">النوع</dt>
+          <dd class="col-7">{{ job.job_type }}</dd>
 
           {% if job.expected_date %}
-          <dt class="col-4 text-muted fw-normal">Scheduled</dt>
-          <dd class="col-8">{{ job.expected_date.strftime("%a %d %b %Y, %H:%M") }}</dd>
+          <dt class="col-5 text-muted fw-normal">الموعد</dt>
+          <dd class="col-7">{{ job.expected_date.strftime("%a %d %b %Y, %H:%M") }}</dd>
           {% endif %}
 
           {% if job.description %}
-          <dt class="col-4 text-muted fw-normal">Notes</dt>
-          <dd class="col-8">{{ job.description }}</dd>
+          <dt class="col-5 text-muted fw-normal">ملاحظات</dt>
+          <dd class="col-7">{{ job.description }}</dd>
           {% endif %}
         </dl>
+
+        {# Maps button #}
+        {% if job.address %}
+        <a href="https://www.google.com/maps/search/{{ (job.address + ' ' + job.location)|urlencode }}"
+           target="_blank" class="btn btn-sm btn-outline-primary w-100 mt-3">
+          <i class="bi bi-map me-1"></i>افتح في الخريطة
+        </a>
+        {% endif %}
       </div>
     </div>
 
-    {# Tech notes #}
+    {# ── Tech notes ────────────────────────────────────────────── #}
     <div class="card border-0 shadow-sm mb-3">
       <div class="card-body">
-        <h6 class="fw-semibold mb-2">My notes</h6>
-        <textarea id="tech-notes" class="form-control mb-2" rows="4"
-                  placeholder="Add notes about this job…">{{ job.tech_notes or '' }}</textarea>
-        <button id="save-notes" class="btn btn-outline-secondary btn-sm">
-          <i class="bi bi-floppy me-1"></i>Save notes
+        <h6 class="fw-semibold mb-2">ملاحظاتي</h6>
+        <textarea id="tech-notes" class="form-control mb-2" rows="3"
+                  placeholder="اكتب أي ملاحظات هنا…" dir="rtl">{{ job.tech_notes or '' }}</textarea>
+        <button id="save-notes" class="btn btn-outline-secondary btn-sm w-100">
+          <i class="bi bi-floppy me-1"></i>حفظ الملاحظات
         </button>
-        <span id="notes-feedback" class="ms-2 small text-success d-none">Saved</span>
+        <span id="notes-feedback" class="d-block text-center text-success small mt-1 d-none">تم الحفظ ✓</span>
+      </div>
+    </div>
+
+    {# ── WhatsApp invoice (shown after done) ──────────────────── #}
+    <div id="wa-invoice-card" class="card border-0 shadow-sm mb-3 border-success {{ 'd-none' if job.status != 'Completed' }}">
+      <div class="card-body text-center">
+        <p class="fw-semibold mb-2">✅ تم إنهاء المهمة!</p>
+        <p class="text-muted small mb-3">أرسل رسالة واتساب للعميل تلقائياً</p>
+        <a id="wa-send-btn"
+           href="{{ url_for('admin.invoice_send_whatsapp', job_id=job.id) if current_user.is_admin else '#' }}"
+           target="_blank"
+           class="btn btn-success w-100">
+          <i class="bi bi-whatsapp me-2"></i>إرسال الفاتورة للعميل
+        </a>
       </div>
     </div>
 
@@ -87,22 +116,67 @@
 {% endblock %}
 
 {% block scripts %}
+<style>
+  .btn-tap {
+    font-size: 1.2rem;
+    font-weight: 700;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 3px solid transparent;
+    transition: all .15s;
+    opacity: .55;
+  }
+  .btn-tap:hover { opacity: .8; transform: scale(1.01); }
+  .btn-tap.active-btn { opacity: 1 !important; transform: scale(1.03); box-shadow: 0 4px 16px rgba(0,0,0,.15); }
+  .btn-tap-blue   { background:#dbeafe; color:#1d4ed8; border-color:#93c5fd; }
+  .btn-tap-yellow { background:#fef9c3; color:#92400e; border-color:#fde047; }
+  .btn-tap-green  { background:#dcfce7; color:#166534; border-color:#86efac; }
+  .btn-tap-blue.active-btn   { background:#1d4ed8; color:#fff; }
+  .btn-tap-yellow.active-btn { background:#d97706; color:#fff; }
+  .btn-tap-green.active-btn  { background:#16a34a; color:#fff; }
+</style>
+
 <script>
 (function () {
-  const jobId = {{ job.id }};
-  const BASE  = BASE_URL;
+  const jobId  = {{ job.id }};
+  const phone  = "{{ job.phone }}";
+  const client = "{{ job.client_name }}";
+  const type   = "{{ job.job_type }}";
+  const loc    = "{{ job.location }}";
+  const BASE   = BASE_URL;
+
+  function buildWhatsApp() {
+    let p = phone.replace(/\D/g,'');
+    if (p.startsWith('0')) p = '20' + p.slice(1);
+    const msg = encodeURIComponent(
+      `مرحباً ${client}،\n\nتم الانتهاء من: *${type}*\nالموقع: ${loc}\n\nشكراً لثقتك في MAS 🙏\nللاستفسار عن الفاتورة، سيتواصل معك فريقنا قريباً.`
+    );
+    return `https://wa.me/${p}?text=${msg}`;
+  }
 
   async function updateStatus(status) {
     const notes = document.getElementById('tech-notes').value;
-    const res = await fetch(`${BASE}/tech/api/job/${jobId}/status`, {
+    const res   = await fetch(`${BASE}/tech/api/job/${jobId}/status`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ status, tech_notes: notes }),
     });
+
     if (res.ok) {
       document.querySelectorAll('.status-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.status === status);
+        b.classList.toggle('active-btn', b.dataset.status === status);
       });
+
+      const waCard = document.getElementById('wa-invoice-card');
+      if (status === 'Completed') {
+        waCard.classList.remove('d-none');
+        const waBtn = document.getElementById('wa-send-btn');
+        if (waBtn.getAttribute('href') === '#') {
+          waBtn.href = buildWhatsApp();
+        }
+      } else {
+        waCard.classList.add('d-none');
+      }
     }
   }
 
@@ -112,9 +186,9 @@
 
   document.getElementById('save-notes').addEventListener('click', async () => {
     const notes  = document.getElementById('tech-notes').value;
-    const status = document.querySelector('.status-btn.active')?.dataset.status
-                   || '{{ job.status }}';
-    const res = await fetch(`${BASE}/tech/api/job/${jobId}/status`, {
+    const active = document.querySelector('.status-btn.active-btn');
+    const status = active ? active.dataset.status : '{{ job.status }}';
+    const res    = await fetch(`${BASE}/tech/api/job/${jobId}/status`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ status, tech_notes: notes }),
@@ -122,7 +196,7 @@
     if (res.ok) {
       const fb = document.getElementById('notes-feedback');
       fb.classList.remove('d-none');
-      setTimeout(() => fb.classList.add('d-none'), 2000);
+      setTimeout(() => fb.classList.add('d-none'), 2500);
     }
   });
 })();

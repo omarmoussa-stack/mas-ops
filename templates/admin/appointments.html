@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}المواعيد — MAS Ops{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <h4 class="mb-0 fw-bold">
+    <i class="bi bi-calendar2-check me-2" style="color:#6f42c1"></i>المواعيد والزيارات
+  </h4>
+  <a href="{{ url_for('appointments.appointment_new') }}" class="btn btn-purple">
+    <i class="bi bi-plus-lg me-1"></i> حجز زيارة
+  </a>
+</div>
+
+{# Filters #}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-2 align-items-end">
+      <div class="col-sm-4">
+        <label class="form-label small fw-semibold">الفني</label>
+        <select name="tech_id" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="">كل الفنيين</option>
+          {% for t in techs %}
+            <option value="{{ t.id }}" {% if tech_id == t.id %}selected{% endif %}>{{ t.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-sm-3">
+        <label class="form-label small fw-semibold">من</label>
+        <input type="date" name="date_from" value="{{ date_from }}"
+               class="form-control form-control-sm" onchange="this.form.submit()">
+      </div>
+      <div class="col-sm-3">
+        <label class="form-label small fw-semibold">إلى</label>
+        <input type="date" name="date_to" value="{{ date_to }}"
+               class="form-control form-control-sm" onchange="this.form.submit()">
+      </div>
+      <div class="col-sm-2">
+        <a href="{{ url_for('appointments.list_appointments') }}"
+           class="btn btn-outline-secondary btn-sm w-100">
+          <i class="bi bi-x-circle me-1"></i>مسح
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<p class="text-muted small mb-3"><strong>{{ visits|length }}</strong> زيارة</p>
+
+{% if visits %}
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>العميل</th>
+          <th>نوع الزيارة</th>
+          <th>المنطقة</th>
+          <th>الفني</th>
+          <th>الموعد</th>
+          <th>الحالة</th>
+          <th>الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in visits %}
+        {% set overdue = v.expected_date and v.expected_date < now and not v.confirmed %}
+        <tr class="{{ 'table-danger' if overdue else ('table-success bg-opacity-10' if v.confirmed else '') }}">
+
+          <td class="text-muted small">#{{ v.id }}</td>
+
+          <td>
+            <div class="fw-semibold">{{ v.client_name }}</div>
+            <a href="tel:{{ v.phone }}" class="text-muted small text-decoration-none">
+              <i class="bi bi-telephone me-1"></i>{{ v.phone }}
+            </a>
+          </td>
+
+          <td>
+            <span class="badge rounded-pill" style="background:#ede7f6;color:#6f42c1;">
+              {{ v.job_type }}
+            </span>
+          </td>
+
+          <td class="small text-muted">
+            <i class="bi bi-geo-alt me-1"></i>{{ v.location }}
+          </td>
+
+          <td>
+            {% if v.technician %}
+              <span class="badge bg-secondary">{{ v.technician.full_name }}</span>
+            {% else %}
+              <span class="text-muted small">غير محدد</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if v.expected_date %}
+              <div class="fw-semibold small">{{ v.expected_date.strftime('%d %b %Y') }}</div>
+              <div class="text-muted small">
+                {{ v.expected_date.strftime('%I:%M %p') }}
+              </div>
+              {% if overdue %}
+                <span class="badge bg-danger mt-1">متأخرة</span>
+              {% endif %}
+            {% else %}
+              <span class="text-muted small">لم يحدد</span>
+            {% endif %}
+          </td>
+
+          {# Confirmation status #}
+          <td>
+            {% if v.confirmed %}
+              <span class="badge bg-success fs-6 py-2 px-3">
+                <i class="bi bi-check-circle me-1"></i>مؤكد ✅
+              </span>
+            {% else %}
+              <span class="badge bg-warning text-dark fs-6 py-2 px-3">
+                <i class="bi bi-clock me-1"></i>في الانتظار
+              </span>
+            {% endif %}
+          </td>
+
+          <td>
+            <div class="d-flex gap-1 flex-wrap">
+
+              {# WhatsApp message #}
+              <a href="{{ url_for('appointments.whatsapp_confirm', visit_id=v.id) }}"
+                 class="btn btn-sm btn-success" title="أرسل واتساب" target="_blank">
+                <i class="bi bi-whatsapp"></i>
+              </a>
+
+              {# Manual confirm button — Option C #}
+              {% if not v.confirmed %}
+              <form method="POST"
+                    action="{{ url_for('appointments.manual_confirm', visit_id=v.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-success"
+                        title="تأكيد الموعد يدوياً">
+                  <i class="bi bi-check-lg me-1"></i>تأكيد
+                </button>
+              </form>
+              {% endif %}
+
+              {# Edit #}
+              <a href="{{ url_for('admin.job_edit', job_id=v.id) }}"
+                 class="btn btn-sm btn-outline-primary" title="تعديل">
+                <i class="bi bi-pencil"></i>
+              </a>
+
+              {# Convert to job #}
+              <form method="POST"
+                    action="{{ url_for('appointments.convert_to_job', visit_id=v.id) }}"
+                    onsubmit="return confirm('تحويل هذه الزيارة إلى مهمة؟')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-purple" title="تحويل لمهمة">
+                  <i class="bi bi-arrow-right-circle me-1"></i>مهمة
+                </button>
+              </form>
+
+              {# Cancel #}
+              <form method="POST"
+                    action="{{ url_for('appointments.cancel_visit', visit_id=v.id) }}"
+                    onsubmit="return confirm('إلغاء هذه الزيارة؟')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="إلغاء">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </form>
+
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+<div class="text-center py-5">
+  <i class="bi bi-calendar2-x display-1 text-muted opacity-25"></i>
+  <p class="mt-3 text-muted">لا توجد زيارات قادمة.</p>
+  <a href="{{ url_for('appointments.appointment_new') }}" class="btn btn-purple mt-2">
+    <i class="bi bi-plus-lg me-1"></i> احجز أول زيارة
+  </a>
+</div>
+{% endif %}
+
+<style>
+  .btn-purple       { background-color:#6f42c1;border-color:#6f42c1;color:#fff; }
+  .btn-purple:hover { background-color:#5a32a3;color:#fff; }
+</style>
+{% endblock %}

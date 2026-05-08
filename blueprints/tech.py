@@ -10,7 +10,7 @@ from flask_login import login_required, current_user
 from extensions import db
 from models import (
     JobRequest,
-    STATUS_INCOMPLETE, STATUS_IN_PROCESS, STATUS_COMPLETED,
+    STATUS_VISIT, STATUS_INCOMPLETE, STATUS_IN_PROCESS, STATUS_COMPLETED,
     notify_admins, NOTIF_INFO, NOTIF_SUCCESS, NOTIF_WARNING,
 )
 
@@ -40,7 +40,7 @@ def dashboard():
         query = query.filter_by(technician_id=current_user.id)
 
     active = (
-        query.filter(JobRequest.status.in_([STATUS_INCOMPLETE, STATUS_IN_PROCESS]))
+        query.filter(JobRequest.status.in_([STATUS_VISIT, STATUS_INCOMPLETE, STATUS_IN_PROCESS]))
         .order_by(JobRequest.expected_date.asc().nullslast())
         .all()
     )

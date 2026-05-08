@@ -29,6 +29,7 @@ def _migrate(db):
     from sqlalchemy import text
     migrations = [
         "ALTER TABLE job_requests ADD COLUMN is_archived BOOLEAN NOT NULL DEFAULT 0",
+        "ALTER TABLE job_requests ADD COLUMN confirmed BOOLEAN NOT NULL DEFAULT 0",
         "ALTER TABLE job_requests ADD COLUMN client_id INTEGER REFERENCES clients(id)",
         "DELETE FROM notifications WHERE link LIKE '/admin/%' OR link LIKE '/tech/%' OR link LIKE '/clients/%'",
     ]
@@ -56,12 +57,14 @@ def create_app(config_object=DevelopmentConfig):
     from blueprints.tech          import tech_bp
     from blueprints.notifications import notif_bp
     from blueprints.clients       import clients_bp
+    from blueprints.appointments  import appointments_bp
 
     app.register_blueprint(auth_bp,     url_prefix="/auth")
     app.register_blueprint(admin_bp,    url_prefix="/admin")
     app.register_blueprint(tech_bp,     url_prefix="/tech")
     app.register_blueprint(notif_bp,    url_prefix="/notifications")
     app.register_blueprint(clients_bp,  url_prefix="/clients")
+    app.register_blueprint(appointments_bp, url_prefix="/appointments")
 
     # Exempt JSON-only blueprints from CSRF (they use token auth or fetch APIs)
     csrf.exempt(notif_bp)

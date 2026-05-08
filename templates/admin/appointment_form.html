@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}حجز زيارة — MAS Ops{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <a href="{{ url_for('appointments.list_appointments') }}" class="btn btn-sm btn-outline-secondary me-3">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h4 class="mb-0 fw-bold">
+    <i class="bi bi-calendar2-plus me-2" style="color:#6f42c1"></i>حجز زيارة جديدة
+  </h4>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('appointments.appointment_new') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          {# Client picker #}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">اختر عميل موجود</label>
+            <select name="client_id" id="clientSelect" class="form-select" onchange="autofillClient(this)">
+              <option value="">— اختر من قائمة العملاء —</option>
+              {% for c in clients %}
+                <option value="{{ c.id }}"
+                        data-phone="{{ c.phone }}"
+                        data-location="{{ c.location or '' }}"
+                        data-address="{{ c.address or '' }}"
+                        data-name="{{ c.name }}">
+                  {{ c.name }} — {{ c.phone }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold">اسم العميل</label>
+              <input type="text" name="client_name" id="clientName" class="form-control" placeholder="أو اكتب يدوياً">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold">رقم الهاتف</label>
+              <input type="text" name="phone" id="clientPhone" class="form-control" placeholder="01XXXXXXXXX">
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold">المنطقة</label>
+              <input type="text" name="location" id="clientLocation" class="form-control" placeholder="مثال: مدينة نصر">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold">العنوان التفصيلي</label>
+              <input type="text" name="address" id="clientAddress" class="form-control" placeholder="الشارع والرقم">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">نوع الزيارة</label>
+            <select name="job_type" class="form-select" required>
+              <option value="">— اختر النوع —</option>
+              {% for jt in config.JOB_TYPES %}
+                <option value="{{ jt }}">{{ jt }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">ملاحظات</label>
+            <textarea name="description" class="form-control" rows="2" placeholder="أي تفاصيل إضافية…"></textarea>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold">تاريخ ووقت الزيارة</label>
+              <input type="datetime-local" name="expected_date" class="form-control" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold">الفني المسؤول</label>
+              <select name="technician_id" class="form-select">
+                <option value="">— غير محدد —</option>
+                {% for t in techs %}
+                  <option value="{{ t.id }}">{{ t.full_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-purple px-4">
+              <i class="bi bi-calendar2-check me-1"></i> تأكيد الحجز
+            </button>
+            <a href="{{ url_for('appointments.list_appointments') }}" class="btn btn-outline-secondary">إلغاء</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .btn-purple { background-color:#6f42c1;border-color:#6f42c1;color:#fff; }
+  .btn-purple:hover { background-color:#5a32a3;color:#fff; }
+</style>
+
+<script>
+function autofillClient(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  document.getElementById('clientName').value     = opt.dataset.name     || '';
+  document.getElementById('clientPhone').value    = opt.dataset.phone    || '';
+  document.getElementById('clientLocation').value = opt.dataset.location || '';
+  document.getElementById('clientAddress').value  = opt.dataset.address  || '';
+}
+</script>
+{% endblock %}

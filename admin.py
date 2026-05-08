@@ -18,7 +18,7 @@ from extensions import db
 from models import (
     Client, JobRequest, User,
     ROLE_ADMIN, ROLE_TECH,
-    STATUS_INCOMPLETE, STATUS_IN_PROCESS, STATUS_COMPLETED,
+    STATUS_VISIT, STATUS_INCOMPLETE, STATUS_IN_PROCESS, STATUS_COMPLETED,
     notify, notify_admins, NOTIF_SUCCESS, NOTIF_INFO,
 )
 
@@ -42,6 +42,7 @@ def admin_required(view_fn):
 @admin_required
 def dashboard():
     stats = {
+        "visits":          JobRequest.query.filter_by(status=STATUS_VISIT,      is_archived=False).count(),
         "incomplete":      JobRequest.query.filter_by(status=STATUS_INCOMPLETE, is_archived=False).count(),
         "in_process":      JobRequest.query.filter_by(status=STATUS_IN_PROCESS, is_archived=False).count(),
         "completed":       JobRequest.query.filter_by(status=STATUS_COMPLETED,  is_archived=False).count(),
@@ -72,7 +73,7 @@ def calendar():
 def jobs_list():
     status = request.args.get("status")
     query = JobRequest.query.filter_by(is_archived=False)
-    if status in (STATUS_INCOMPLETE, STATUS_IN_PROCESS, STATUS_COMPLETED):
+    if status in (STATUS_VISIT, STATUS_INCOMPLETE, STATUS_IN_PROCESS, STATUS_COMPLETED):
         query = query.filter_by(status=status)
     jobs = query.order_by(JobRequest.expected_date.desc().nullslast()).all()
     return render_template("admin/jobs_list.html", jobs=jobs, status_filter=status)
@@ -461,7 +462,7 @@ def _populate_job_from_form(job: JobRequest, form) -> JobRequest:
     job.technician_id = tech_id if tech_id else None
 
     status = form.get("status") or STATUS_INCOMPLETE
-    if status in (STATUS_INCOMPLETE, STATUS_IN_PROCESS, STATUS_COMPLETED):
+    if status in (STATUS_VISIT, STATUS_INCOMPLETE, STATUS_IN_PROCESS, STATUS_COMPLETED):
         job.status = status
 
     expected = form.get("expected_date")

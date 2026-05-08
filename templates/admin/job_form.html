@@ -127,9 +127,10 @@
       <div class="col-sm-4">
         <label class="form-label fw-medium">Status</label>
         <select name="status" class="form-select">
-          <option value="Incomplete"  {% if job and job.status == "Incomplete"  %}selected{% endif %}>Incomplete</option>
-          <option value="In Process"  {% if job and job.status == "In Process"  %}selected{% endif %}>In Process</option>
-          <option value="Completed"   {% if job and job.status == "Completed"   %}selected{% endif %}>Completed</option>
+          <option value="Visit"       {% if not job or job.status == "Visit"    %}selected{% endif %}>📅 Visit (Appointment)</option>
+          <option value="Incomplete"  {% if job and job.status == "Incomplete"  %}selected{% endif %}>🔵 Incomplete (Job)</option>
+          <option value="In Process"  {% if job and job.status == "In Process"  %}selected{% endif %}>🟡 In Process</option>
+          <option value="Completed"   {% if job and job.status == "Completed"   %}selected{% endif %}>🟢 Completed</option>
         </select>
       </div>
       <div class="col-sm-3">

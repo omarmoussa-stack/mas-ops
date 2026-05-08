@@ -22,11 +22,13 @@ from extensions import db, login_manager
 ROLE_ADMIN = "admin"
 ROLE_TECH  = "tech"
 
+STATUS_VISIT      = "Visit"
 STATUS_INCOMPLETE = "Incomplete"
 STATUS_IN_PROCESS = "In Process"
 STATUS_COMPLETED  = "Completed"
 
 STATUS_COLORS = {
+    STATUS_VISIT:      "#6f42c1",
     STATUS_INCOMPLETE: "#0d6efd",
     STATUS_IN_PROCESS: "#ffc107",
     STATUS_COMPLETED:  "#198754",
@@ -190,7 +192,9 @@ class JobRequest(db.Model):
     invoice_items = db.Column(db.Text,    nullable=True)
 
     tech_notes  = db.Column(db.Text, nullable=True)
-    is_archived = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    is_archived     = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    confirmed       = db.Column(db.Boolean, default=False, nullable=False)
+    confirm_token   = db.Column(db.String(64), nullable=True, unique=True, index=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(
