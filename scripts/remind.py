@@ -155,7 +155,7 @@ def send_email(subject, plain, html):
         server.sendmail(MAIL_USER, REMIND_TO, msg.as_string())
 
 def main():
-    now        = datetime.now()
+    now        = datetime.utcnow() + timedelta(hours=3)  # Egypt = UTC+3
     current_hr = now.hour
 
     for trigger_hour, subject, days_ahead in REMINDER_SLOTS:
