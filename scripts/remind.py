@@ -40,13 +40,15 @@ REMINDER_SLOTS = [
 ]
 
 def get_visits_for_date(target_date):
-    """Query visits (STATUS_VISIT or any status) scheduled for target_date."""
+    """Query visits scheduled for target_date (dates stored as UTC in DB)."""
     from app import app
     from models import JobRequest, STATUS_VISIT, STATUS_INCOMPLETE, STATUS_IN_PROCESS
 
     with app.app_context():
-        start = datetime.combine(target_date, datetime.min.time())
-        end   = datetime.combine(target_date, datetime.max.time())
+        # DB stores UTC times, but we query by Egypt date (UTC+3)
+        # So May 9 Egypt = May 8 21:00 UTC to May 9 20:59 UTC
+        start = datetime.combine(target_date, datetime.min.time()) - timedelta(hours=3)
+        end   = datetime.combine(target_date, datetime.max.time()) - timedelta(hours=3)
         jobs  = (
             JobRequest.query
             .filter(
