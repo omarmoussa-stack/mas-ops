@@ -194,7 +194,6 @@ class JobRequest(db.Model):
     tech_notes  = db.Column(db.Text, nullable=True)
     is_archived     = db.Column(db.Boolean, default=False, nullable=False, index=True)
     confirmed       = db.Column(db.Boolean, default=False, nullable=False)
-    confirm_token   = db.Column(db.String(64), nullable=True, unique=True, index=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(

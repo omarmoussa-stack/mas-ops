@@ -464,6 +464,8 @@ def _populate_job_from_form(job: JobRequest, form) -> JobRequest:
     status = form.get("status") or STATUS_INCOMPLETE
     if status in (STATUS_VISIT, STATUS_INCOMPLETE, STATUS_IN_PROCESS, STATUS_COMPLETED):
         job.status = status
+    if not hasattr(job, 'confirmed') or job.confirmed is None:
+        job.confirmed = False
 
     expected = form.get("expected_date")
     if expected:
