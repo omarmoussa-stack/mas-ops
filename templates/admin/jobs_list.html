@@ -91,39 +91,30 @@
           </td>
           <td class="text-nowrap">
 
-            {# WhatsApp confirm button — only for Visits #}
+            {# Visit-only action buttons #}
             {% if job.status == "Visit" %}
+            <div class="d-flex flex-wrap gap-1 mb-1">
               <a href="{{ url_for('appointments.whatsapp_confirm', visit_id=job.id) }}"
-                 class="btn btn-success btn-sm me-1" title="Send WhatsApp Confirmation"
-                 target="_blank">
+                 class="btn btn-success btn-sm" title="WhatsApp" target="_blank">
                 <i class="bi bi-whatsapp"></i>
               </a>
-
-              {# Manual confirm if not yet confirmed #}
               {% if not job.confirmed %}
-              <form method="POST"
-                    action="{{ url_for('appointments.manual_confirm', visit_id=job.id) }}"
-                    class="d-inline">
+              <form method="POST" action="{{ url_for('appointments.manual_confirm', visit_id=job.id) }}" class="d-inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-outline-success btn-sm me-1"
-                        title="Mark as Confirmed">
+                <button type="submit" class="btn btn-outline-success btn-sm" title="Confirm">
                   <i class="bi bi-check-lg"></i>
                 </button>
               </form>
               {% endif %}
-
-              {# Convert to Job #}
-              <form method="POST"
-                    action="{{ url_for('appointments.convert_to_job', visit_id=job.id) }}"
-                    class="d-inline"
-                    onsubmit="return confirm('Convert this visit to a job?')">
+              <form method="POST" action="{{ url_for('appointments.convert_to_job', visit_id=job.id) }}"
+                    class="d-inline" onsubmit="return confirm('Convert to job?')">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-sm me-1"
-                        style="background:#6f42c1;color:#fff;border-color:#6f42c1"
-                        title="Convert to Job">
+                <button type="submit" class="btn btn-sm"
+                        style="background:#6f42c1;color:#fff;border-color:#6f42c1" title="→ Job">
                   <i class="bi bi-arrow-right-circle me-1"></i>Job
                 </button>
               </form>
+            </div>
             {% endif %}
 
             <a href="{{ url_for('admin.job_edit', job_id=job.id) }}"
