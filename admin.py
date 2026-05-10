@@ -338,14 +338,16 @@ def invoice_save_amount(job_id):
     job = JobRequest.query.get_or_404(job_id)
     data = request.get_json(silent=True) or {}
     amount_raw = data.get("amount", "")
+    payment_raw = data.get("payment_received", "")
     items = data.get("items", [])
     try:
         job.amount = float(amount_raw) if amount_raw else None
+        job.payment_received = float(payment_raw) if payment_raw else 0
     except (ValueError, TypeError):
         return jsonify(ok=False, error="invalid_amount"), 400
     job.invoice_items = json.dumps(items)
     db.session.commit()
-    return jsonify(ok=True, amount=job.amount)
+    return jsonify(ok=True, amount=job.amount, payment_received=job.payment_received)
 
 
 @admin_bp.route("/invoices/<int:job_id>/mark", methods=["POST"])

@@ -163,22 +163,33 @@ def generate_invoice_pdf(job) -> str:
     # ── Totals block ──────────────────────────────────────────────────────
     y -= 4 * mm
     total = float(job.amount or 0)
+    paid = float(getattr(job, 'payment_received', 0) or 0)
+    balance = total - paid
 
     c.setFont("Helvetica", 10)
     c.setFillColor(GRAY_MUTED)
     c.drawRightString(col_total_x - 4, y, "Subtotal")
     c.setFillColor(GRAY_DARK)
     c.drawRightString(table_r - 2, y, f"EGP {total:,.0f}")
-    y -= 7 * mm
+    y -= 6 * mm
+
+    if paid > 0:
+        c.setFont("Helvetica", 10)
+        c.setFillColor(GRAY_MUTED)
+        c.drawRightString(col_total_x - 4, y, "Payment Received")
+        c.setFillColor(colors.HexColor("#16a34a"))
+        c.drawRightString(table_r - 2, y, f"- EGP {paid:,.0f}")
+        y -= 7 * mm
 
     c.setStrokeColor(ACCENT)
     c.setLineWidth(1.2)
     c.line(col_price_x, y + 3 * mm, table_r, y + 3 * mm)
 
+    label = "Balance Due" if paid > 0 else "Total"
     c.setFont("Helvetica-Bold", 13)
     c.setFillColor(GRAY_DARK)
-    c.drawRightString(col_total_x - 4, y - 2 * mm, "Total")
-    c.drawRightString(table_r - 2,     y - 2 * mm, f"EGP {total:,.2f}")
+    c.drawRightString(col_total_x - 4, y - 2 * mm, label)
+    c.drawRightString(table_r - 2,     y - 2 * mm, f"EGP {balance:,.2f}")
 
     # ── Footer ────────────────────────────────────────────────────────────
     footer_y = 18 * mm

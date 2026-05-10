@@ -81,12 +81,31 @@
           <i class="bi bi-plus me-1"></i>Add row
         </button>
 
-        {# Total #}
-        <div class="d-flex justify-content-end align-items-center gap-3 mb-3">
-          <span class="fw-semibold">Total:</span>
-          <span class="fw-bold fs-5" id="grand-total">
-            EGP {{ "{:,.0f}".format(job.amount) if job.amount else "0" }}
-          </span>
+        {# Subtotal + Payment + Balance #}
+        <div class="border-top pt-3 mb-3">
+          <div class="d-flex justify-content-end align-items-center gap-3 mb-2">
+            <span class="text-muted">Subtotal:</span>
+            <span class="fw-semibold" id="subtotal" style="min-width:100px;text-align:right">
+              EGP {{ "{:,.0f}".format(job.amount) if job.amount else "0" }}
+            </span>
+          </div>
+
+          <div class="d-flex justify-content-end align-items-center gap-3 mb-2">
+            <label class="text-muted mb-0" for="payment-received">Payment received:</label>
+            <div class="input-group input-group-sm" style="width:180px">
+              <span class="input-group-text">EGP</span>
+              <input type="number" id="payment-received" class="form-control text-end"
+                     min="0" step="0.01"
+                     value="{{ '{:.0f}'.format(job.payment_received) if job.payment_received else '0' }}">
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end align-items-center gap-3">
+            <span class="fw-semibold">Balance Due:</span>
+            <span class="fw-bold fs-5" id="grand-total" style="min-width:100px;text-align:right">
+              EGP 0
+            </span>
+          </div>
         </div>
 
         {# Actions #}
@@ -148,8 +167,17 @@
       const t = row.querySelector('.item-total');
       if (t) t.textContent = 'EGP ' + line.toLocaleString('en-EG', {maximumFractionDigits:0});
     });
-    document.getElementById('grand-total').textContent =
+    const payment = parseFloat(document.getElementById('payment-received').value) || 0;
+    const balance = total - payment;
+    document.getElementById('subtotal').textContent =
       'EGP ' + total.toLocaleString('en-EG', {maximumFractionDigits:0});
+    document.getElementById('grand-total').textContent =
+      'EGP ' + balance.toLocaleString('en-EG', {maximumFractionDigits:0});
+    // Color balance: red if positive (due), green if zero/negative (paid)
+    const balEl = document.getElementById('grand-total');
+    balEl.classList.remove('text-success','text-danger');
+    if (balance > 0) balEl.classList.add('text-danger');
+    else if (balance <= 0 && total > 0) balEl.classList.add('text-success');
   }
 
   function addRow(desc='', qty=1, price=0) {
@@ -187,7 +215,7 @@
     const res = await fetch('{{ url_for("admin.invoice_save_amount", job_id=job.id) }}', {
       method: 'POST',
       headers: {'Content-Type':'application/json', 'X-CSRFToken': '{{ csrf_token() }}'},
-      body: JSON.stringify({amount: total, items}),
+      body: JSON.stringify({amount: total, payment_received: parseFloat(document.getElementById('payment-received').value) || 0, items}),
     });
     const data = await res.json();
     if (data.ok) {

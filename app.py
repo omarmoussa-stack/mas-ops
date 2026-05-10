@@ -30,6 +30,7 @@ def _migrate(db):
     migrations = [
         "ALTER TABLE job_requests ADD COLUMN is_archived BOOLEAN NOT NULL DEFAULT 0",
         "ALTER TABLE job_requests ADD COLUMN confirmed BOOLEAN NOT NULL DEFAULT 0",
+        "ALTER TABLE job_requests ADD COLUMN payment_received FLOAT DEFAULT 0",
         "ALTER TABLE job_requests ADD COLUMN client_id INTEGER REFERENCES clients(id)",
         "DELETE FROM notifications WHERE link LIKE '/admin/%' OR link LIKE '/tech/%' OR link LIKE '/clients/%'",
     ]

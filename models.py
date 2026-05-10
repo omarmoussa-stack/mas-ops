@@ -187,8 +187,9 @@ class JobRequest(db.Model):
     completion_date = db.Column(db.DateTime, nullable=True)
 
     # Financial — ADMIN ONLY
-    amount        = db.Column(db.Float,   nullable=True)
-    invoiced      = db.Column(db.Boolean, default=False, nullable=False)
+    amount             = db.Column(db.Float,   nullable=True)
+    payment_received   = db.Column(db.Float,   nullable=True, default=0)
+    invoiced           = db.Column(db.Boolean, default=False, nullable=False)
     invoice_items = db.Column(db.Text,    nullable=True)
 
     tech_notes  = db.Column(db.Text, nullable=True)
