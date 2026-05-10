@@ -59,6 +59,7 @@
           <th>Client</th>
           <th>Type</th>
           <th>Location</th>
+          <th>Address</th>
           <th>Status</th>
           <th>Tech</th>
           <th>Date</th>
@@ -79,6 +80,7 @@
           </td>
           <td>{{ job.job_type }}</td>
           <td class="text-muted">{{ job.location }}</td>
+          <td class="text-muted">{{ job.address or "—" }}</td>
           <td>
             {% if job.status == "Completed" %}
               <span class="badge bg-success">Done</span>
