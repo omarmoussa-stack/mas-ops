@@ -45,8 +45,8 @@ def generate_invoice_pdf(job) -> str:
     if os.path.exists(LOGO_PATH):
         try:
             logo   = ImageReader(LOGO_PATH)
-            logo_h = 35 * mm
-            logo_w = logo_h * 2.5
+            logo_h = 25 * mm
+            logo_w = logo_h * 1.0  # square logo
             c.drawImage(logo, x_left, y - logo_h, width=logo_w, height=logo_h,
                         preserveAspectRatio=True, mask="auto")
         except Exception:
