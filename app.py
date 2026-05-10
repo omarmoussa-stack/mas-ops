@@ -104,15 +104,15 @@ def create_app(config_object=DevelopmentConfig):
             JobRequest.is_archived == False,
         )
 
-        # Hide past jobs - only show today and upcoming
-        # Match dates directly since the DB stores local datetime values
-        if upcoming_only:
-            from datetime import timedelta
-            egypt_now = datetime.utcnow() + timedelta(hours=3)
-            today_start = datetime.combine(egypt_now.date(), datetime.min.time())
-            query = query.filter(JobRequest.expected_date >= today_start)
+        # Compute today start in Egypt time for upcoming filter
+        from datetime import timedelta
+        egypt_now = datetime.utcnow() + timedelta(hours=3)
+        today_start = datetime.combine(egypt_now.date(), datetime.min.time())
 
-        if start_param:
+        if upcoming_only:
+            # Force start to be today - ignore FullCalendar's start_param if it's earlier
+            query = query.filter(JobRequest.expected_date >= today_start)
+        elif start_param:
             try:
                 query = query.filter(
                     JobRequest.expected_date >= datetime.fromisoformat(
