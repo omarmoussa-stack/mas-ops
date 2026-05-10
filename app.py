@@ -97,11 +97,18 @@ def create_app(config_object=DevelopmentConfig):
         end_param     = request.args.get("end")
         tech_id       = request.args.get("technician_id", type=int)
         status_filter = request.args.get("status")
+        upcoming_only = request.args.get("upcoming", "1") == "1"
 
         query = JobRequest.query.filter(
             JobRequest.expected_date.isnot(None),
             JobRequest.is_archived == False,
         )
+
+        # Hide past jobs by default - only show today and upcoming
+        if upcoming_only:
+            from datetime import timedelta
+            today_start = datetime.combine(datetime.utcnow().date(), datetime.min.time()) - timedelta(hours=3)
+            query = query.filter(JobRequest.expected_date >= today_start)
 
         if start_param:
             try:

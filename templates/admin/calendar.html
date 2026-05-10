@@ -29,10 +29,25 @@
       <label class="form-label mb-0 me-2 small text-muted">Status</label>
       <select id="statusFilter" class="form-select form-select-sm d-inline-block w-auto">
         <option value="">All statuses</option>
+        <option value="Visit">Visit</option>
         <option value="Incomplete">Incomplete</option>
         <option value="In Process">In Process</option>
         <option value="Completed">Completed</option>
       </select>
+    </div>
+
+    <div>
+      <label class="form-label mb-0 me-2 small text-muted">Show</label>
+      <div class="btn-group btn-group-sm" role="group" id="rangeToggle">
+        <input type="radio" class="btn-check" name="range" id="rangeUpcoming" value="1" checked>
+        <label class="btn btn-outline-primary" for="rangeUpcoming">
+          <i class="bi bi-calendar-event me-1"></i>Upcoming
+        </label>
+        <input type="radio" class="btn-check" name="range" id="rangeAll" value="0">
+        <label class="btn btn-outline-secondary" for="rangeAll">
+          <i class="bi bi-clock-history me-1"></i>All
+        </label>
+      </div>
     </div>
   </div>
 </div>
@@ -72,8 +87,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const params = new URLSearchParams();
     const tech   = document.getElementById('techFilter').value;
     const status = document.getElementById('statusFilter').value;
+    const upcoming = document.querySelector('input[name="range"]:checked').value;
     if (tech)   params.set('technician_id', tech);
     if (status) params.set('status', status);
+    params.set('upcoming', upcoming);
     return BASE_URL + '/api/calendar/events?' + params.toString();
   }
 
@@ -120,6 +137,9 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   document.getElementById('statusFilter').addEventListener('change', () => {
     calendar.setOption('events', buildFeedUrl());
+  });
+  document.querySelectorAll('input[name="range"]').forEach(el => {
+    el.addEventListener('change', () => calendar.setOption('events', buildFeedUrl()));
   });
 
   let resizeTimer;
