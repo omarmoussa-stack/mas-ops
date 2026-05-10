@@ -1,6 +1,6 @@
-const CACHE_VERSION = 'mas-ops-v1';
+const CACHE_VERSION = 'mas-ops-v2';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
-const SCOPE_PREFIX = '/mas';
+const SCOPE_PREFIX = '';
 
 const STATIC_ASSETS = [
   `${SCOPE_PREFIX}/static/css/app.css`,
