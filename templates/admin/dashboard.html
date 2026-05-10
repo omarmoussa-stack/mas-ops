@@ -1,5 +1,70 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — MAS Ops{% endblock %}
+{% block title %}Dashboard — MAS Ops
+
+<style>
+  .dash-sort       { cursor:pointer; user-select:none; white-space:nowrap; }
+  .dash-sort:hover { background:rgba(13,110,253,0.08); }
+  .dash-sort i     { margin-left:4px; font-size:10px; opacity:0.5; }
+  .dash-sort.asc i, .dash-sort.desc i { opacity:1; color:#0d6efd; }
+</style>
+
+<script>
+(function () {
+  const table = document.getElementById('dash-table');
+  if (!table) return;
+  const tbody = table.querySelector('tbody');
+  const rows  = Array.from(tbody.querySelectorAll('tr')).filter(r => r.children.length > 1);
+  const search = document.getElementById('dash-search');
+  const clearBtn = document.getElementById('dash-clear');
+  const counter = document.getElementById('dash-count');
+
+  function applyFilter() {
+    const q = (search.value || '').toLowerCase().trim();
+    let visible = 0;
+    rows.forEach(r => {
+      const show = !q || r.innerText.toLowerCase().includes(q);
+      r.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    counter.textContent = visible + ' of ' + rows.length + ' jobs';
+  }
+
+  search.addEventListener('input', applyFilter);
+  clearBtn.addEventListener('click', () => { search.value = ''; applyFilter(); });
+
+  let currentSort = { col: null, dir: 'asc' };
+  table.querySelectorAll('th.dash-sort').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = parseInt(th.dataset.col);
+      const type = th.dataset.sort;
+      const dir = (currentSort.col === col && currentSort.dir === 'asc') ? 'desc' : 'asc';
+      currentSort = { col, dir };
+      table.querySelectorAll('th.dash-sort').forEach(h => h.classList.remove('asc','desc'));
+      th.classList.add(dir);
+      const sorted = [...rows].sort((a, b) => {
+        let av = a.children[col]?.innerText.trim() || '';
+        let bv = b.children[col]?.innerText.trim() || '';
+        if (type === 'num') {
+          av = parseFloat(av.replace(/[^0-9.-]/g,'')) || 0;
+          bv = parseFloat(bv.replace(/[^0-9.-]/g,'')) || 0;
+          return dir === 'asc' ? av - bv : bv - av;
+        }
+        if (type === 'date') {
+          const ad = new Date(av).getTime() || 0;
+          const bd = new Date(bv).getTime() || 0;
+          return dir === 'asc' ? ad - bd : bd - ad;
+        }
+        return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      });
+      sorted.forEach(r => tbody.appendChild(r));
+    });
+  });
+
+  applyFilter();
+})();
+</script>
+
+{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -51,18 +116,29 @@
       View all
     </a>
   </div>
+  <div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
+    <div class="input-group input-group-sm" style="max-width:300px">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input type="text" id="dash-search" class="form-control" placeholder="Search jobs...">
+      <button type="button" class="btn btn-outline-secondary" id="dash-clear" title="Clear">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <span id="dash-count" class="text-muted small ms-2"></span>
+  </div>
+
   <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0 small">
+    <table class="table table-hover align-middle mb-0 small" id="dash-table">
       <thead class="table-light">
         <tr>
-          <th>#</th>
-          <th>Client</th>
-          <th>Type</th>
-          <th>Location</th>
-          <th>Address</th>
-          <th>Status</th>
-          <th>Tech</th>
-          <th>Date</th>
+          <th class="dash-sort" data-sort="num"  data-col="0">#       <i class="bi bi-arrow-down-up text-muted"></i></th>
+          <th class="dash-sort" data-sort="text" data-col="1">Client  <i class="bi bi-arrow-down-up text-muted"></i></th>
+          <th class="dash-sort" data-sort="text" data-col="2">Type    <i class="bi bi-arrow-down-up text-muted"></i></th>
+          <th class="dash-sort" data-sort="text" data-col="3">Location<i class="bi bi-arrow-down-up text-muted"></i></th>
+          <th class="dash-sort" data-sort="text" data-col="4">Address <i class="bi bi-arrow-down-up text-muted"></i></th>
+          <th class="dash-sort" data-sort="text" data-col="5">Status  <i class="bi bi-arrow-down-up text-muted"></i></th>
+          <th class="dash-sort" data-sort="text" data-col="6">Tech    <i class="bi bi-arrow-down-up text-muted"></i></th>
+          <th class="dash-sort" data-sort="date" data-col="7">Date    <i class="bi bi-arrow-down-up text-muted"></i></th>
           <th></th>
         </tr>
       </thead>
@@ -116,4 +192,69 @@
     </table>
   </div>
 </div>
+
+
+<style>
+  .dash-sort       { cursor:pointer; user-select:none; white-space:nowrap; }
+  .dash-sort:hover { background:rgba(13,110,253,0.08); }
+  .dash-sort i     { margin-left:4px; font-size:10px; opacity:0.5; }
+  .dash-sort.asc i, .dash-sort.desc i { opacity:1; color:#0d6efd; }
+</style>
+
+<script>
+(function () {
+  const table = document.getElementById('dash-table');
+  if (!table) return;
+  const tbody = table.querySelector('tbody');
+  const rows  = Array.from(tbody.querySelectorAll('tr')).filter(r => r.children.length > 1);
+  const search = document.getElementById('dash-search');
+  const clearBtn = document.getElementById('dash-clear');
+  const counter = document.getElementById('dash-count');
+
+  function applyFilter() {
+    const q = (search.value || '').toLowerCase().trim();
+    let visible = 0;
+    rows.forEach(r => {
+      const show = !q || r.innerText.toLowerCase().includes(q);
+      r.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    counter.textContent = visible + ' of ' + rows.length + ' jobs';
+  }
+
+  search.addEventListener('input', applyFilter);
+  clearBtn.addEventListener('click', () => { search.value = ''; applyFilter(); });
+
+  let currentSort = { col: null, dir: 'asc' };
+  table.querySelectorAll('th.dash-sort').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = parseInt(th.dataset.col);
+      const type = th.dataset.sort;
+      const dir = (currentSort.col === col && currentSort.dir === 'asc') ? 'desc' : 'asc';
+      currentSort = { col, dir };
+      table.querySelectorAll('th.dash-sort').forEach(h => h.classList.remove('asc','desc'));
+      th.classList.add(dir);
+      const sorted = [...rows].sort((a, b) => {
+        let av = a.children[col]?.innerText.trim() || '';
+        let bv = b.children[col]?.innerText.trim() || '';
+        if (type === 'num') {
+          av = parseFloat(av.replace(/[^0-9.-]/g,'')) || 0;
+          bv = parseFloat(bv.replace(/[^0-9.-]/g,'')) || 0;
+          return dir === 'asc' ? av - bv : bv - av;
+        }
+        if (type === 'date') {
+          const ad = new Date(av).getTime() || 0;
+          const bd = new Date(bv).getTime() || 0;
+          return dir === 'asc' ? ad - bd : bd - ad;
+        }
+        return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      });
+      sorted.forEach(r => tbody.appendChild(r));
+    });
+  });
+
+  applyFilter();
+})();
+</script>
+
 {% endblock %}
