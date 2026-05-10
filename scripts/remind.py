@@ -10,7 +10,7 @@ Sends email reminders at:
 
 Setup on PythonAnywhere:
   Tasks -> Add task -> hourly
-  Command: python3 /home/omarmoussa/mas-ops/scripts/remind.py
+  Command: python3 /home/MASOPS/mas-ops/scripts/remind.py
 """
 
 import os
@@ -21,8 +21,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 # ── Path setup ────────────────────────────────────────────────────────────────
-sys.path.insert(0, "/home/omarmoussa/mas-ops")
-os.environ.setdefault("MASOPS_DATABASE_URL", "sqlite:////home/omarmoussa/mas-ops/instance/mas.db")
+sys.path.insert(0, "/home/MASOPS/mas-ops")
+os.environ.setdefault("MASOPS_DATABASE_URL", "sqlite:////home/MASOPS/mas-ops/instance/mas.db")
 os.environ.setdefault("SECRET_KEY", "remind-script-key")
 
 # ── Config ────────────────────────────────────────────────────────────────────
