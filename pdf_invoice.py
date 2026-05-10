@@ -42,46 +42,36 @@ def generate_invoice_pdf(job) -> str:
     x_right = page_w - margin
     y       = page_h - margin
 
-    # ── Modern hero header: logo banner + invoice meta box ───────────────
-    BRAND_DARK = colors.HexColor("#1a1a2e")
-    BRAND_ACCENT = colors.HexColor("#0d6efd")
-
-    # Top banner background
-    banner_h = 35 * mm
-    c.setFillColor(BRAND_DARK)
-    c.rect(0, page_h - banner_h, page_w, banner_h, fill=1, stroke=0)
-
-    # Logo - large and prominent on the dark banner
-    logo_y = page_h - banner_h + 8 * mm
+    # ── Clean header: large logo + invoice meta ──────────────────────────
     if os.path.exists(LOGO_PATH):
         try:
             logo = ImageReader(LOGO_PATH)
-            logo_h = 18 * mm
+            logo_h = 22 * mm
             logo_w = logo_h * (1737/394)
-            c.drawImage(logo, x_left, logo_y, width=logo_w, height=logo_h,
+            c.drawImage(logo, x_left, y - logo_h, width=logo_w, height=logo_h,
                         preserveAspectRatio=True, mask="auto")
         except Exception:
-            c.setFillColor(colors.white)
-            c.setFont("Helvetica-Bold", 24)
-            c.drawString(x_left, logo_y + 6 * mm, "MAS")
+            _draw_text_logo(c, x_left, y)
+    else:
+        _draw_text_logo(c, x_left, y)
 
-    # Company tagline in white on banner
-    c.setFillColor(colors.HexColor("#888"))
-    c.setFont("Helvetica", 9)
-    c.drawString(x_left, page_h - banner_h + 4 * mm,
-                 "MOUSSA FOR ALUMINIUM SOLUTIONS")
-
-    # INVOICE label - white text right-aligned on banner
-    c.setFillColor(colors.white)
+    # INVOICE label and meta - right aligned
     c.setFont("Helvetica-Bold", 28)
-    c.drawRightString(x_right, page_h - 16 * mm, "INVOICE")
+    c.setFillColor(GRAY_DARK)
+    c.drawRightString(x_right, y - 6 * mm, "INVOICE")
 
-    c.setFillColor(colors.HexColor("#aaa"))
     c.setFont("Helvetica", 10)
-    c.drawRightString(x_right, page_h - 22 * mm, f"No. {inv_no}")
-    c.drawRightString(x_right, page_h - 27 * mm, f"Date: {inv_date}")
+    c.setFillColor(GRAY_MUTED)
+    c.drawRightString(x_right, y - 13 * mm, f"No. {inv_no}")
+    c.drawRightString(x_right, y - 19 * mm, f"Date: {inv_date}")
 
-    y = page_h - banner_h - 12 * mm
+    y -= 30 * mm
+
+    # Subtle divider line
+    c.setStrokeColor(GRAY_LIGHT)
+    c.setLineWidth(0.5)
+    c.line(x_left, y, x_right, y)
+    y -= 8 * mm
 
     # ── Bill-to + Job details (two columns) ───────────────────────────────
     col_r = page_w / 2 + 5 * mm
