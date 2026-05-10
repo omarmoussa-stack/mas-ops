@@ -104,16 +104,13 @@ def create_app(config_object=DevelopmentConfig):
             JobRequest.is_archived == False,
         )
 
-        # Hide past jobs by default - only show today and upcoming (Egypt timezone UTC+3)
+        # Hide past jobs - only show today and upcoming
+        # Match dates directly since the DB stores local datetime values
         if upcoming_only:
             from datetime import timedelta
-            # Get current Egypt time, then take the date portion (today in Egypt)
             egypt_now = datetime.utcnow() + timedelta(hours=3)
-            egypt_today = egypt_now.date()
-            # Convert "start of today in Egypt" to UTC for the DB query
-            # Egypt 00:00 = UTC 21:00 of previous day
-            today_start_utc = datetime.combine(egypt_today, datetime.min.time()) - timedelta(hours=3)
-            query = query.filter(JobRequest.expected_date >= today_start_utc)
+            today_start = datetime.combine(egypt_now.date(), datetime.min.time())
+            query = query.filter(JobRequest.expected_date >= today_start)
 
         if start_param:
             try:
